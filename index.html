@@ -5,170 +5,213 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>生物实验模拟系统</title>
     <style>
-        /* 全局重置与基础字体 */
+        /* =========================================
+           CSS 变量定义 (配色方案)
+           逻辑：通过变量管理颜色，便于统一修改和实现深色模式
+           ========================================= */
+        :root {
+            /* 浅色模式 (默认) */
+            --bg-color: #f5f7fa;
+            --text-primary: #1f2937;
+            --text-secondary: #6b7280;
+            --card-bg: #ffffff;
+            --card-border: #e5e7eb;
+            --card-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            --card-hover-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+            --accent-color: #2563eb; /* 科技蓝 */
+            --accent-hover: #1d4ed8;
+            --footer-text: #9ca3af;
+        }
+
+        /* 深色模式适配 */
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --bg-color: #111827;
+                --text-primary: #f3f4f6;
+                --text-secondary: #9ca3af;
+                --card-bg: #1f2937;
+                --card-border: #374151;
+                --card-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.5);
+                --card-hover-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.5);
+                --accent-color: #60a5fa; /* 较亮的蓝色以适应深底 */
+                --accent-hover: #93c5fd;
+                --footer-text: #6b7280;
+            }
+        }
+
+        /* =========================================
+           全局重置与基础样式
+           ========================================= */
         * {
-            box-sizing: border-box; /* 确保内边距不撑大容器 */
+            box-sizing: border-box;
+            transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
         }
 
         body {
-            font-family: "Microsoft YaHei", "Heiti SC", sans-serif;
-            background-color: #f0f2f5;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", "Microsoft YaHei", sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-primary);
             margin: 0;
             padding: 0;
+            min-height: 100vh;
             display: flex;
             flex-direction: column;
             align-items: center;
-            min-height: 100vh;
         }
 
-        /* 标题样式 */
-        h1 {
-            color: #333;
-            margin-top: 50px;
-            margin-bottom: 40px;
-            font-size: 28px;
-            letter-spacing: 2px;
-            border-bottom: 3px solid #2c3e50;
-            padding-bottom: 10px;
-            text-align: center; /* 确保移动端标题居中 */
-            padding-left: 10px;
-            padding-right: 10px;
-        }
-
-        /* 桌面端表格布局样式 */
-        table.layout-table {
-            border-collapse: separate;
-            border-spacing: 20px;
-            background-color: #fff;
-            padding: 20px;
-            border: 1px solid #dcdcdc;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-        }
-
-        /* 单元格样式 */
-        td {
-            width: 200px;
-            height: 100px;
+        /* =========================================
+           布局组件
+           ========================================= */
+        
+        /* 头部样式 */
+        header {
+            width: 100%;
+            padding: 60px 20px 40px;
             text-align: center;
-            vertical-align: middle;
-            border: 1px solid #eee;
-            background-color: #fafafa;
-            transition: all 0.3s;
-            border-radius: 4px; /* 轻微圆角 */
         }
 
-        td:hover {
-            background-color: #e8e8e8;
-            border-color: #ccc;
+        h1 {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin: 0;
+            letter-spacing: 1px;
+            position: relative;
+            display: inline-block;
+        }
+
+        /* 标题下方的装饰线 */
+        h1::after {
+            content: '';
+            display: block;
+            width: 60px;
+            height: 4px;
+            background-color: var(--accent-color);
+            margin: 15px auto 0;
+            border-radius: 2px;
+        }
+
+        /* 核心网格容器 (替代原有的 table) */
+        .grid-container {
+            width: 100%;
+            max-width: 1200px; /* 限制最大宽度 */
+            padding: 20px;
+            display: grid;
+            /* 逻辑：自动填充列，每列最小240px，最大1fr。这实现了自动响应式，无需特定的移动端媒体查询 */
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            gap: 25px;
+            justify-content: center;
+        }
+
+        /* =========================================
+           卡片样式 (替代原有的 td)
+           ========================================= */
+        .card {
+            background-color: var(--card-bg);
+            border: 1px solid var(--card-border);
+            border-radius: 12px;
+            box-shadow: var(--card-shadow);
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            transform: translateY(0);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: var(--card-hover-shadow);
+            border-color: var(--accent-color);
         }
 
         /* 按钮连接样式 */
-        a.exp-button {
+        a.exp-link {
             display: flex;
             align-items: center;
             justify-content: center;
             width: 100%;
             height: 100%;
+            min-height: 120px; /* 增加点击区域高度 */
             text-decoration: none;
-            color: #2c3e50;
-            font-weight: bold;
-            font-size: 16px;
-            padding: 10px; /* 防止文字贴边 */
-            line-height: 1.4; /* 优化多行文字行高 */
-        }
-
-        a.exp-button:hover {
-            color: #0056b3;
-        }
-
-        /* 底部版权或版本信息 */
-        footer {
-            margin-top: auto;
-            margin-bottom: 20px;
-            font-size: 12px;
-            color: #666;
-            padding: 20px;
+            color: var(--text-primary);
+            font-weight: 600;
+            font-size: 1.1rem;
+            padding: 24px;
             text-align: center;
+            line-height: 1.5;
+        }
+
+        a.exp-link:hover {
+            color: var(--accent-color);
         }
 
         /* =========================================
-           移动端适配逻辑 (Media Query)
-           当屏幕宽度小于 1024px 时生效
+           底部样式
            ========================================= */
-        @media screen and (max-width: 1024px) {
-            /* 1. 重置表格相关元素的 display 属性，使其像 div 一样排列 */
-            table.layout-table, tbody, tr, td {
-                display: block;
-                width: 100%;
-            }
-
-            /* 2. 移除表格容器的装饰，改为透明背景，去除边框 */
-            table.layout-table {
-                background-color: transparent;
-                border: none;
-                box-shadow: none;
-                padding: 10px; /* 减小外围内边距 */
-                border-spacing: 0; /* 重置间距 */
-            }
-
-            /* 3. 设置单元格（现在表现为卡片）的样式 */
-            td {
-                width: 100%;       /* 占满屏幕宽度 */
-                height: auto;      /* 高度自适应 */
-                min-height: 80px;  /* 最小高度 */
-                margin-bottom: 15px; /* 块级元素垂直间距 */
-                background-color: #fff;
-                box-shadow: 0 2px 4px rgba(0,0,0,0.08); /* 增加阴影以突出卡片感 */
-                border: 1px solid #e0e0e0;
-            }
-
-            /* 4. 调整标题边距，适应小屏幕 */
-            h1 {
-                margin-top: 30px;
-                margin-bottom: 20px;
-                font-size: 24px;
-            }
+        footer {
+            margin-top: auto;
+            padding: 40px 20px;
+            font-size: 0.875rem;
+            color: var(--footer-text);
+            text-align: center;
+            border-top: 1px solid var(--card-border);
+            width: 100%;
         }
+
     </style>
 </head>
 <body>
 
-    <h1>生物实验模拟系统</h1>
+    <header>
+        <h1>生物实验模拟系统</h1>
+    </header>
 
-    <!-- 核心布局：表格 -->
-    <table class="layout-table">
-        <!-- 第一行 -->
-        <tr>
-            <td>
-                <a href="./TagRecaptureExperiment/index.html" class="exp-button">标记重捕法</a>
-            </td>
-            <td>
-                <a href="./SamplingMethod/index.html" class="exp-button">样方法</a>
-            </td>
-        </tr>
+    <!-- 
+      核心布局：Grid 网格 
+      逻辑：摒弃 Table 布局，使用 div 容器配合 CSS Grid，
+      使结构与表现分离，提升渲染性能与维护性。
+    -->
+    <main class="grid-container">
         
-        <!-- 第二行 -->
-        <tr>
-            <td>
-                <a href="./quadrat/Grass.html" class="exp-button">样方法 草本植物</a>
-            </td>
-            <td>
-                <a href="./quadrat/GrassAggregation.html" class="exp-button">样方法 草本植物 聚合</a>
-            </td>
-            <td>
-                <a href="./quadrat/GrassRectangle.html" class="exp-button">样方法 草本植物 长方形地块</a>
-            </td>
-            <td>
-                <a href="./quadrat/GrassRound.html" class="exp-button">样方法 草本植物 圆形地块</a>
-            </td>
-            <td>
-                <a href="./quadrat/shrub.html" class="exp-button">样方法 灌木</a>
-            </td>
-        </tr>
-    </table>
+        <!-- 卡片 1 -->
+        <div class="card">
+            <a href="./TagRecaptureExperiment/index.html" class="exp-link">标记重捕法</a>
+        </div>
+        
+        <!-- 卡片 2 -->
+        <div class="card">
+            <a href="./SamplingMethod/index.html" class="exp-link">样方法</a>
+        </div>
+        
+        <!-- 卡片 3 -->
+        <div class="card">
+            <a href="./quadrat/Grass.html" class="exp-link">样方法<br>草本植物</a>
+        </div>
+        
+        <!-- 卡片 4 -->
+        <div class="card">
+            <a href="./quadrat/GrassAggregation.html" class="exp-link">样方法<br>草本植物 (聚合)</a>
+        </div>
+        
+        <!-- 卡片 5 -->
+        <div class="card">
+            <a href="./quadrat/GrassRectangle.html" class="exp-link">样方法<br>草本植物 (长方形地块)</a>
+        </div>
+        
+        <!-- 卡片 6 -->
+        <div class="card">
+            <a href="./quadrat/GrassRound.html" class="exp-link">样方法<br>草本植物 (圆形地块)</a>
+        </div>
+        
+        <!-- 卡片 7 -->
+        <div class="card">
+            <a href="./quadrat/shrub.html" class="exp-link">样方法<br>灌木</a>
+        </div>
+
+    </main>
 
     <footer>
-        &copy; 2025 生物实验 | 系统版本 1.0 | GoldenEaglePersonal
+        &copy; 2025 生物实验 | 系统版本 1.1 | GoldenEaglePersonal
     </footer>
 
 </body>
