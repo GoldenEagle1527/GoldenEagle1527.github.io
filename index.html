@@ -6,6 +6,10 @@
     <title>生物实验模拟系统</title>
     <style>
         /* 全局重置与基础字体 */
+        * {
+            box-sizing: border-box; /* 确保内边距不撑大容器 */
+        }
+
         body {
             font-family: "Microsoft YaHei", "Heiti SC", sans-serif;
             background-color: #f0f2f5;
@@ -26,12 +30,15 @@
             letter-spacing: 2px;
             border-bottom: 3px solid #2c3e50;
             padding-bottom: 10px;
+            text-align: center; /* 确保移动端标题居中 */
+            padding-left: 10px;
+            padding-right: 10px;
         }
 
-        /* 表格布局样式 */
+        /* 桌面端表格布局样式 */
         table.layout-table {
             border-collapse: separate;
-            border-spacing: 20px; /* 单元格间距 */
+            border-spacing: 20px;
             background-color: #fff;
             padding: 20px;
             border: 1px solid #dcdcdc;
@@ -46,23 +53,28 @@
             vertical-align: middle;
             border: 1px solid #eee;
             background-color: #fafafa;
-            transition: background-color 0.3s;
+            transition: all 0.3s;
+            border-radius: 4px; /* 轻微圆角 */
         }
 
         td:hover {
             background-color: #e8e8e8;
+            border-color: #ccc;
         }
 
         /* 按钮连接样式 */
         a.exp-button {
-            display: block;
+            display: flex;
+            align-items: center;
+            justify-content: center;
             width: 100%;
             height: 100%;
-            line-height: 100px; /* 垂直居中 */
             text-decoration: none;
             color: #2c3e50;
             font-weight: bold;
             font-size: 16px;
+            padding: 10px; /* 防止文字贴边 */
+            line-height: 1.4; /* 优化多行文字行高 */
         }
 
         a.exp-button:hover {
@@ -75,6 +87,47 @@
             margin-bottom: 20px;
             font-size: 12px;
             color: #666;
+            padding: 20px;
+            text-align: center;
+        }
+
+        /* =========================================
+           移动端适配逻辑 (Media Query)
+           当屏幕宽度小于 1024px 时生效
+           ========================================= */
+        @media screen and (max-width: 1024px) {
+            /* 1. 重置表格相关元素的 display 属性，使其像 div 一样排列 */
+            table.layout-table, tbody, tr, td {
+                display: block;
+                width: 100%;
+            }
+
+            /* 2. 移除表格容器的装饰，改为透明背景，去除边框 */
+            table.layout-table {
+                background-color: transparent;
+                border: none;
+                box-shadow: none;
+                padding: 10px; /* 减小外围内边距 */
+                border-spacing: 0; /* 重置间距 */
+            }
+
+            /* 3. 设置单元格（现在表现为卡片）的样式 */
+            td {
+                width: 100%;       /* 占满屏幕宽度 */
+                height: auto;      /* 高度自适应 */
+                min-height: 80px;  /* 最小高度 */
+                margin-bottom: 15px; /* 块级元素垂直间距 */
+                background-color: #fff;
+                box-shadow: 0 2px 4px rgba(0,0,0,0.08); /* 增加阴影以突出卡片感 */
+                border: 1px solid #e0e0e0;
+            }
+
+            /* 4. 调整标题边距，适应小屏幕 */
+            h1 {
+                margin-top: 30px;
+                margin-bottom: 20px;
+                font-size: 24px;
+            }
         }
     </style>
 </head>
