@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>多物种样方法模拟</title>
+    <title>样方法模拟</title>
     <style>
         /* --- CSS 变量定义 (支持深色模式) --- */
         :root {
@@ -88,7 +88,7 @@
 
         #simulation-container {
             position: relative;
-            background-color: var(--bg-color); /* 深色模式下跟随背景 */
+            background-color: var(--bg-color);
             overflow: hidden;
             display: flex;
             justify-content: center;
@@ -96,16 +96,16 @@
             padding: 20px;
         }
         
-        /* 模拟区域增加白色背景(浅色模式)或深灰(深色模式)以区分植物 */
+        /* 模拟区域 */
         #simulation-area {
             width: 100%;
             max-width: 80vh; 
-            aspect-ratio: 1 / 1;
+            /* aspect-ratio 和 border-radius 将由 JS 动态控制 */
             background-color: var(--panel-bg); 
             border: 2px solid var(--text-main);
             position: relative;
             box-shadow: 0 0 15px var(--shadow);
-            transition: background 0.3s;
+            transition: all 0.3s ease-in-out; /* 增加形状切换动画 */
         }
 
         .plant-anchor {
@@ -128,10 +128,10 @@
         }
         .plant-highlight {
             animation: target-pulse 1.5s infinite ease-in-out;
-            z-index: 100; /* 确保高亮植物在最上层 */
+            z-index: 100;
         }
         .plant-dimmed {
-            opacity: 0.2; /* 非目标植物变暗 */
+            opacity: 0.2;
             filter: grayscale(80%);
         }
 
@@ -243,7 +243,6 @@
         .btn-success { background-color: #27ae60; color: white; border: none; margin-top: 15px; }
         .btn-sm { width: auto; padding: 4px 8px; font-size: 12px; }
 
-        /* 深色模式下的按钮适配 */
         @media (prefers-color-scheme: dark) {
             .btn-primary { background-color: var(--accent-color); color: white; }
         }
@@ -254,8 +253,6 @@
 
         .setting-item { margin-bottom: 10px; }
         .setting-item label { display: block; margin-bottom: 5px; font-size: 13px; color: var(--text-main); }
-        .range-wrap { display: flex; align-items: center; gap: 10px; font-size: 12px; color: var(--text-sub); }
-        input[type="range"] { flex: 1; }
         input[type="text"], input[type="number"], select {
             border: 1px solid var(--border-color);
             border-radius: 4px;
@@ -278,18 +275,17 @@
         .species-header { display: flex; justify-content: space-between; margin-bottom: 8px; }
         .species-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
 
-        /* 模态框 (放大版) */
+        /* 模态框 */
         .modal-overlay {
             position: fixed; top: 0; left: 0; right: 0; bottom: 0;
             background: var(--modal-overlay); display: none;
             justify-content: center; align-items: center; z-index: 2000;
-            backdrop-filter: blur(3px); /* 增加模糊背景 */
+            backdrop-filter: blur(3px);
         }
         .modal {
             background: var(--panel-bg); 
             padding: 25px; 
             border-radius: 12px; 
-            /* 显著增加宽度 */
             width: 650px; 
             max-width: 95vw;
             max-height: 95vh;
@@ -300,20 +296,18 @@
             color: var(--text-main);
         }
         .quadrat-view-container {
-            /* 显著增加可视区域 */
             width: 500px; 
             height: 500px; 
             max-width: 100%;
             aspect-ratio: 1/1;
             margin: 0 auto;
             position: relative; 
-            background: var(--bg-color); /* 深色模式下的视野背景 */ 
+            background: var(--bg-color); 
             border: 2px solid var(--border-color); 
             overflow: hidden;
             border-radius: 8px;
         }
 
-        /* 手机端适配大模态框 */
         @media (max-width: 600px) {
             .modal { width: 95vw; padding: 15px; }
             .quadrat-view-container { width: 100%; height: auto; aspect-ratio: 1/1; }
@@ -326,7 +320,6 @@
             margin-bottom: 10px;
             border: 1px solid var(--accent-color);
         }
-        
     </style>
 </head>
 <body>
@@ -387,8 +380,8 @@
                         <div class="result-box" style="border-left: 4px solid var(--accent-color);">
                             <div class="section-title">统计结果报告</div>
                             <div class="result-line"><span>目标物种:</span> <strong id="res-name">--</strong></div>
+                            <div class="result-line"><span>真实种群密度:</span> <strong id="true-density">--</strong> 株/m²</div>
                             <div class="result-line"><span>您的估算密度:</span> <strong id="user-density">--</strong> 株/m²</div>
-                            <div class="result-line"><span>真实密度:</span> <strong id="true-density">--</strong> 株/m²</div>
                             <div class="result-line"><span>相对误差:</span> <strong id="error-rate" style="color:var(--highlight-color)">--</strong>%</div>
                         </div>
                     </div>
@@ -400,8 +393,19 @@
             <div class="section">
                 <div class="section-title">环境参数</div>
                 <div class="setting-item">
-                    <label>样地等效边长 (1-1000 m):</label>
+                    <label>地形形状:</label>
+                    <select id="setting-shape" onchange="updateSettings()">
+                        <option value="square">正方形 (1:1)</option>
+                        <option value="rect169">长方形 (16:9)</option>
+                        <option value="circle">圆形</option>
+                    </select>
+                </div>
+                <div class="setting-item">
+                    <label>主边长/直径 (1-1000 m):</label>
                     <input type="number" id="setting-area-size" value="15" min="1" max="1000" onchange="updateSettings()">
+                    <div style="font-size:11px; color:var(--text-sub); margin-top:3px;">
+                        *对于长方形指长边，对于圆形指直径。
+                    </div>
                 </div>
                 <div class="setting-item">
                     <label>随机种子 (Seed):</label>
@@ -417,8 +421,6 @@
                     <span>物种列表 (Species)</span>
                     <button class="btn btn-sm btn-primary" style="width:auto;" onclick="addNewSpecies()">+ 添加</button>
                 </div>
-                
-                <!-- 物种列表容器 -->
                 <div id="species-list-container"></div>
             </div>
 
@@ -428,9 +430,12 @@
     </div>
 
     <div id="simulation-container">
+        <!-- 模拟区域 -->
         <div id="simulation-area"></div>
-        <div style="position: absolute; bottom: 5px; right: 10px; font-size: 12px; color: #555; background:rgba(255,255,255,0.7); padding:2px 5px; border-radius:3px;">
-            区域: <span id="area-scale-label">15</span>m x <span id="area-scale-label-2">15</span>m
+        
+        <!-- 比例尺信息 -->
+        <div style="position: absolute; bottom: 5px; right: 10px; font-size: 12px; color: #555; background:rgba(255,255,255,0.8); padding:4px 8px; border-radius:3px; box-shadow:0 1px 3px rgba(0,0,0,0.1); pointer-events: none;">
+            尺寸: <span id="area-scale-label">15</span>m x <span id="area-scale-label-2">15</span>m <span id="area-shape-label"></span>
         </div>
     </div>
 
@@ -438,7 +443,7 @@
     <div class="modal-overlay" id="count-modal">
         <div class="modal">
             <div class="modal-header" style="text-align: center; padding-bottom:10px; border-bottom:1px solid var(--border-color);">
-                <span style="font-size:18px; font-weight:bold;">样方计数</span>
+                <span style="font-size:18px; font-weight:bold;">样方计数 (俯视图)</span>
                 <div style="font-size: 13px; color: var(--text-sub); margin-top:5px;">
                     请统计: <span id="modal-target-name" style="color:var(--highlight-color); font-weight:bold; font-size:15px;">--</span>
                     <span style="font-size:11px; margin-left:5px;">(其他植物已自动变暗)</span>
@@ -468,7 +473,8 @@
     const state = {
         mode: null, 
         settings: { 
-            areaSize: 15, 
+            areaSize: 15,  // 主边长（宽或直径）
+            shape: 'square', // square, rect169, circle
             seed: "BioLab",
             species: JSON.parse(JSON.stringify(DEFAULT_SPECIES))
         },
@@ -539,33 +545,33 @@
                     </div>
                     <div>
                         <label>大小(px):</label>
-                        <input type="number" value="${sp.size}" min="2" max="50" onchange="updateSpeciesParam('${sp.id}', 'size', parseInt(this.value))">
+                        <input type="number" value="${sp。size}" min="2" max="50" onchange="updateSpeciesParam('${sp。id}', 'size', parseInt(this.value))">
                     </div>
                     <div>
                         <label>形状:</label>
-                        <select onchange="updateSpeciesParam('${sp.id}', 'shape', this.value)">
-                            <option value="circle" ${sp.shape=='circle'?'selected':''}>圆形</option>
-                            <option value="square" ${sp.shape=='square'?'selected':''}>正方形</option>
-                            <option value="triangle" ${sp.shape=='triangle'?'selected':''}>三角形</option>
-                            <option value="rhombus" ${sp.shape=='rhombus'?'selected':''}>菱形</option>
-                            <option value="star" ${sp.shape=='star'?'selected':''}>星形</option>
+                        <select onchange="updateSpeciesParam('${sp。id}', 'shape', this.value)">
+                            <option value="circle" ${sp。shape=='circle'?'selected':''}>圆形</option>
+                            <option value="square" ${sp。shape=='square'?'selected':''}>正方形</option>
+                            <option value="triangle" ${sp。shape=='triangle'?'selected':''}>三角形</option>
+                            <option value="rhombus" ${sp。shape=='rhombus'?'selected':''}>菱形</option>
+                            <option value="star" ${sp。shape=='star'?'selected':''}>星形</option>
                         </select>
                     </div>
                     <div>
                         <label>风格:</label>
-                        <select onchange="updateSpeciesParam('${sp.id}', 'style', this.value)">
-                            <option value="solid" ${sp.style=='solid'?'selected':''}>实心</option>
-                            <option value="hollow" ${sp.style=='hollow'?'selected':''}>空心</option>
+                        <select onchange="updateSpeciesParam('${sp。id}', 'style', this.value)">
+                            <option value="solid" ${sp。style=='solid'?'selected':''}>实心</option>
+                            <option value="hollow" ${sp。style=='hollow'?'selected':''}>空心</option>
                         </select>
                     </div>
                     <div style="grid-column: span 2; display:flex; gap:10px; align-items:center;">
                         <label style="margin:0;">颜色:</label>
-                        <input type="color" value="${sp.color}" onchange="updateSpeciesParam('${sp.id}', 'color', this.value)" style="flex:1; height:30px;">
+                        <input type="color" value="${sp。color}" onchange="updateSpeciesParam('${sp。id}', 'color', this.value)" style="flex:1; height:30px;">
                     </div>
                     <div style="grid-column: span 2;">
-                        <label>分布离散度 (0聚-1散): ${sp.dispersion}</label>
+                        <label>分布离散度 (0聚-1散): ${sp。dispersion}</label>
                         <input type="range" min="0" max="1" step="0.1" value="${sp.dispersion}" 
-                            onchange="updateSpeciesParam('${sp.id}', 'dispersion', parseFloat(this.value))"
+                            onchange="updateSpeciesParam('${sp。id}', 'dispersion', parseFloat(this.value))"
                             style="width:100%">
                     </div>
                 </div>
@@ -577,70 +583,88 @@
 
     function addNewSpecies() {
         const colors = ['#e74c3c', '#e67e22', '#f1c40f', '#2ecc71', '#3498db', '#9b59b6'];
-        const shapes = ['circle', 'square', 'triangle', 'star'];
-        const id = 's' + Date.now(); 
-        const randColor = colors[state.settings.species.length % colors.length];
-        const randShape = shapes[state.settings.species.length % shapes.length];
+        const shapes = ['circle', 'square'， 'triangle'， 'star'];
+        const id = 's' + Date.当前(); 
+        const randColor = colors[state。设置。species.length % colors.length];
+        const randShape = shapes[state。设置。species.length % shapes.length];
         
-        state.settings.species.push({
+        state.设置.species.push({
             id: id,
             name: `新物种 ${state.settings.species.length + 1}`,
             count: 50,
             size: 8,
-            shape: randShape,
-            style: 'solid',
-            color: randColor,
+            shape: randShape，
+            style: 'solid'，
+            color: randColor，
             dispersion: 0.8
         });
         renderSpeciesSettings();
     }
 
     function removeSpecies(id) {
-        if (state.settings.species.length <= 1) {
+        if (state.设置.species.length <= 1) {
             alert("至少保留一种植物！");
             return;
         }
-        state.settings.species = state.settings.species.filter(s => s.id !== id);
+        state。设置。species = state。设置。species.filter(s => s.id !== id);
         renderSpeciesSettings();
     }
 
-    function updateSpeciesParam(id, key, val) {
-        const sp = state.settings.species.find(s => s.id === id);
+    function updateSpeciesParam(id， key, val) {
+        const sp = state。设置。species.find(s => s。id === id);
         if(sp) sp[key] = val;
     }
 
     function updateMainTargetSelect() {
-        DOM.targetSelect.innerHTML = '';
-        state.settings.species.forEach(sp => {
-            const opt = document.createElement('option');
-            opt.value = sp.id;
-            opt.innerText = sp.name;
-            opt.style.color = sp.color; 
-            DOM.targetSelect.appendChild(opt);
+        DOM。targetSelect。innerHTML = '';
+        state。设置。species。forEach(sp => {
+            const opt = document。createElement('option');
+            opt。value = sp。id;
+            opt。innerText = sp。name;
+            opt。style。color = sp。color; 
+            DOM。targetSelect。appendChild(opt);
         });
     }
 
     function updateSettings() {
-        let size = parseInt(document.getElementById('setting-area-size').value);
+        let size = parseInt(document。getElementById('setting-area-size')。value);
         if(size < 1) size = 1; if(size > 1000) size = 1000;
         state.settings.areaSize = size;
-        state.settings.seed = document.getElementById('setting-seed').value;
-        document.getElementById('area-scale-label').innerText = size;
-        document.getElementById('area-scale-label-2').innerText = size;
+        state。设置。seed = document。getElementById('setting-seed')。value;
+        state。设置。shape = document。getElementById('setting-shape')。value;
+        
+        // 更新显示标签
+        let h = size;
+        if(state.设置.shape === 'rect169') h = (size * 9 / 16).toFixed(1);
+        
+        document.getElementById('area-scale-label')。innerText = size;
+        document.getElementById('area-scale-label-2')。innerText = state。设置。shape === 'circle' ? size : h;
+        
+        const shapeNames = { 'square': '(正方形)', 'rect169': '(16:9)', 'circle': '(圆形 直径)' };
+        document.getElementById('area-shape-label').innerText = shapeNames[state.settings.shape];
+    }
+
+    function randomizeSeed() {
+        const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+        let res = '';
+        for(let i=0; i<6; i++) res += chars。charAt(Math。floor(Math.random() * chars.length));
+        document.getElementById('setting-seed').value = res;
+        updateSettings();
     }
 
     function shareConfiguration() {
         const config = {
-            a: state.settings.areaSize,
-            s: state.settings.seed,
-            sp: state.settings.species
+            a: state。settings.areaSize,
+            s: state。设置。seed,
+            sh: state。设置。shape,
+            sp: state.设置。species
         };
         const jsonStr = JSON.stringify(config);
         const encoded = encodeURIComponent(jsonStr);
-        const url = `${window.location.origin}${window.location.pathname}?cfg=${encoded}`;
+        const url = `${window。location.origin}${window.location.pathname}?cfg=${encoded}`;
         
-        navigator.clipboard.writeText(url).then(() => {
-            showToast(window.innerWidth/2, window.innerHeight - 50, "✅ 链接已复制！");
+        navigator.clipboard.writeText(url).键，然后(() => {
+            showToast(window.innerWidth/2, window。innerHeight - 50, "✅ 链接已复制！");
         }).catch(() => {
             prompt("复制链接:", url);
         });
@@ -653,6 +677,7 @@
                 const config = JSON.parse(decodeURIComponent(params.get('cfg')));
                 if(config.a) state.settings.areaSize = config.a;
                 if(config.s) state.settings.seed = config.s;
+                if(config.sh) state.settings.shape = config.sh;
                 if(config.sp && Array.isArray(config.sp)) state.settings.species = config.sp;
             } catch(e) {
                 console.error("配置解析失败", e);
@@ -660,6 +685,7 @@
         }
         document.getElementById('setting-area-size').value = state.settings.areaSize;
         document.getElementById('setting-seed').value = state.settings.seed;
+        document.getElementById('setting-shape').value = state.settings.shape || 'square';
     }
 
     // --- 模拟生成逻辑 ---
@@ -667,6 +693,18 @@
     function resetSimulation() {
         updateSettings();
         initSeed(state.settings.seed);
+
+        // 应用形状样式
+        if(state.settings.shape === 'square') {
+            DOM.simArea.style.aspectRatio = "1/1";
+            DOM.simArea.style.borderRadius = "0";
+        } else if (state.settings.shape === 'rect169') {
+            DOM.simArea.style.aspectRatio = "16/9";
+            DOM.simArea.style.borderRadius = "0";
+        } else if (state.settings.shape === 'circle') {
+            DOM.simArea.style.aspectRatio = "1/1";
+            DOM.simArea.style.borderRadius = "50%";
+        }
 
         state.quadrats.forEach(q => q.element.remove());
         state.quadrats = [];
@@ -682,28 +720,59 @@
         state.plants = [];
         const fragment = document.createDocumentFragment();
         const rand = seededRandom; 
+        const isCircle = state.settings.shape === 'circle';
 
         state.settings.species.forEach(sp => {
             const clusters = Math.max(1, Math.floor(sp.count / 20));
             const clusterCenters = [];
             for(let k=0; k<clusters; k++) {
-                clusterCenters.push({x: rand() * 100, y: rand() * 100});
+                // 生成聚类中心，如果是圆形，需确保中心在圆内
+                let cx, cy, valid = false;
+                let attempts = 0;
+                while(!valid && attempts < 50) {
+                    cx = rand() * 100;
+                    cy = rand() * 100;
+                    if(isCircle) {
+                        const dist = Math.sqrt(Math.pow(cx-50, 2) + Math.pow(cy-50, 2));
+                        if(dist <= 48) valid = true; // 略微内缩
+                    } else {
+                        valid = true;
+                    }
+                    attempts++;
+                }
+                if(valid) clusterCenters.push({x: cx, y: cy});
             }
 
-            for (let i = 0; i < sp.count; i++) {
+            let generatedCount = 0;
+            let attempts = 0;
+            
+            // 尝试生成植物，如果因地形限制失败多次则停止，防止死循环
+            while(generatedCount < sp.count && attempts < sp.count * 10) {
+                attempts++;
                 let x, y;
-                if (rand() < sp.dispersion) {
-                    x = rand() * 100;
-                    y = rand() * 100;
-                } else {
-                    const center = clusterCenters[Math.floor(rand() * clusters)];
+                
+                if (clusterCenters.length > 0 && rand() >= sp.dispersion) {
+                    // 聚集分布
+                    const center = clusterCenters[Math.floor(rand() * clusterCenters.length)];
                     const offset = () => (rand() - 0.5) * 15;
                     x = center.x + offset();
                     y = center.y + offset();
-                    x = Math.max(0, Math.min(100, x));
-                    y = Math.max(0, Math.min(100, y));
+                } else {
+                    // 随机分布
+                    x = rand() * 100;
+                    y = rand() * 100;
                 }
+
+                // 边界检查与圆形裁切
+                if (x < 0 || x > 100 || y < 0 || y > 100) continue;
                 
+                if (isCircle) {
+                    const dist = Math.sqrt(Math.pow(x-50, 2) + Math.pow(y-50, 2));
+                    // 50是半径，保留一点边缘余量
+                    if(dist > 50) continue; 
+                }
+
+                generatedCount++;
                 state.plants.push({
                     x, y,
                     speciesId: sp.id, 
@@ -825,15 +894,58 @@
 
     function addQuadrat(initialX, initialY, cx, cy) {
         let sizeM = state.currentPreset === 'custom' ? state.customSize : state.currentPreset;
-        const sizePct = (sizeM / state.settings.areaSize) * 100;
         
-        const half = sizePct / 2;
-        let x = Math.max(half, Math.min(100 - half, initialX));
-        let y = Math.max(half, Math.min(100 - half, initialY));
+        // 计算样方在当前地形中的百分比尺寸
+        // areaSize 永远是“宽”或“直径”
+        const widthM = state.settings.areaSize;
+        let heightM = widthM;
+        if(state.settings.shape === 'rect169') heightM = widthM * 9 / 16;
+        
+        const wPct = (sizeM / widthM) * 100;
+        const hPct = (sizeM / heightM) * 100;
+        
+        // 边界检查（考虑样方大小）
+        let x = Math.max(wPct/2, Math.min(100 - wPct/2, initialX));
+        let y = Math.max(hPct/2, Math.min(100 - hPct/2, initialY));
 
+        // 圆形地形特殊边界检查：确保样方在圆内
+        // 简化判定：检查样方中心距离圆心的距离是否 加上样方对角线的一半 小于 50 (圆半径)
+        // 这是一个严格判定。或者宽松一点：四个角都在圆内。
+        if(state.settings.shape === 'circle') {
+            // 将百分比坐标转换为相对于中心的(-50 到 50)
+            const corners = [
+                {dx: -wPct/2, dy: -hPct/2},
+                {dx: wPct/2, dy: -hPct/2},
+                {dx: wPct/2, dy: hPct/2},
+                {dx: -wPct/2, dy: hPct/2}
+            ];
+            
+            let allInside = true;
+            for(let c of corners) {
+                const cornerX = (x + c.dx) - 50;
+                const cornerY = (y + c.dy) - 50;
+                if(Math.sqrt(cornerX*cornerX + cornerY*cornerY) > 50) {
+                    allInside = false; 
+                    break;
+                }
+            }
+            
+            if(!allInside) {
+                showToast(cx, cy, "⚠️ 样方需完全位于区域内");
+                return;
+            }
+        }
+
+        // 重叠检查
         for (let q of state.quadrats) {
-            if (Math.abs(x - q.x) < (sizePct + q.sizePct)/2 - 0.1 && 
-                Math.abs(y - q.y) < (sizePct + q.sizePct)/2 - 0.1) {
+            // 使用简化的中心距离判断重叠，略微粗糙但够用
+            // 转换为统一刻度比较难，直接比较百分比差值是否小于各自的一半之和
+            const xDist = Math.abs(x - q.x);
+            const yDist = Math.abs(y - q.y);
+            const minX = (wPct + q.wPct)/2 - 0.1;
+            const minY = (hPct + q.hPct)/2 - 0.1;
+
+            if (xDist < minX && yDist < minY) {
                 showToast(cx, cy, "⚠️ 位置重叠");
                 return;
             }
@@ -842,35 +954,40 @@
         const id = state.nextId++;
         const el = document.createElement('div');
         el.className = 'quadrat';
-        el.style.width = sizePct + '%';
-        el.style.height = sizePct + '%';
+        el。style。width = wPct + '%';
+        el。style。height = hPct + '%';
         el.style.left = x + '%';
         el.style.top = y + '%';
-        el.innerText = state.quadrats.length + 1;
+        el。innerText = state.quadrats.length + 1;
         el.addEventListener('mousedown', (ev) => handleQuadratClick(ev, id));
-        el.addEventListener('touchstart', (ev) => handleQuadratClick(ev, id));
+        el。addEventListener('touchstart'， (ev) => handleQuadratClick(ev, id));
 
         DOM.simArea.appendChild(el);
-        state.quadrats.push({ id, x, y, wM: sizeM, hM: sizeM, sizePct, userCount: null, element: el });
+        state.quadrats.push({ 
+            id, x, y, 
+            wPct, hPct, 
+            wM: sizeM, hM: sizeM, // 物理尺寸
+            userCount: null, element: el 
+        });
     }
 
-    function handleQuadratClick(e, id) {
-        e.stopPropagation();
+    function handleQuadratClick(e， id) {
+        e。stopPropagation();
         const qIndex = state.quadrats.findIndex(q => q.id === id);
         const q = state.quadrats[qIndex];
 
         if (state.mode === 'counting') {
             openCountModal(q);
-        } else if (state.mode === 'delete') {
+        } else if (state。mode === 'delete') {
             q.element.remove();
-            state.quadrats.splice(qIndex, 1);
+            state.quadrats.splice(qIndex， 1);
             state.quadrats.forEach((item, idx) => item.element.innerText = idx + 1);
         } else if (state.mode === 'move') {
-            startDrag(e, q);
+            startDrag(e， q);
         }
     }
 
-    function startDrag(e, q) {
+    function startDrag(e， q) {
         const startX = e.clientX || e.touches[0].clientX;
         const startY = e.clientY || e.touches[0].clientY;
         const startL = parseFloat(q.element.style.left);
@@ -879,46 +996,54 @@
 
         const onMove = (evt) => {
             const cx = evt.clientX || evt.touches[0].clientX;
-            const cy = evt.clientY || evt.touches[0].clientY;
+            const cy = evt.clientY || evt.touches[0]。clientY;
             const dx = ((cx - startX)/rect.width)*100;
-            const dy = ((cy - startY)/rect.height)*100;
-            let nx = Math.max(q.sizePct/2, Math.min(100-q.sizePct/2, startL + dx));
-            let ny = Math.max(q.sizePct/2, Math.min(100-q.sizePct/2, startT + dy));
+            const dy = ((cy - startY)/rect。height)*100;
+            let nx = Math。max(q。wPct/2, Math.min(100-q.wPct/2, startL + dx));
+            let ny = Math.max(q.hPct/2, Math.min(100-q.hPct/2, startT + dy));
+            
+            // 简单的圆形边界限制（拖拽时）
+            if(state。设置。shape === 'circle') {
+               const cx = nx - 50; const cy = ny - 50;
+               // 粗略限制中心点
+               if(Math.sqrt(cx*cx + cy*cy) > (50 - Math.max(q.wPct, q.hPct)/2)) return;
+            }
+
             q.element.style.left = nx + '%';
-            q.element.style.top = ny + '%';
+            q.element。style。top = ny + '%';
             q.tempX = nx; q.tempY = ny;
         };
         const onUp = () => {
             if(q.tempX) { q.x = q.tempX; q.y = q.tempY; }
-            document.removeEventListener('mousemove', onMove);
-            document.removeEventListener('mouseup', onUp);
-            document.removeEventListener('touchmove', onMove);
+            document。removeEventListener('mousemove'， onMove);
+            document。removeEventListener('mouseup'， onUp);
+            document。removeEventListener('touchmove', onMove);
             document.removeEventListener('touchend', onUp);
         };
-        document.addEventListener('mousemove', onMove);
+        document.addEventListener('mousemove'， onMove);
         document.addEventListener('mouseup', onUp);
-        document.addEventListener('touchmove', onMove, {passive:false});
-        document.addEventListener('touchend', onUp);
+        document.addEventListener('touchmove'， onMove, {passive:false});
+        document.addEventListener('touchend'， onUp);
     }
 
     // --- 统计逻辑 ---
 
     function startStatistics() {
-        if (state.quadrats.length === 0) {
+        if (state。quadrats.length === 0) {
             alert("请先放置样方");
             return;
         }
         
         state.targetSpeciesId = DOM.targetSelect.value;
-        const targetSp = state.settings.species.find(s => s.id === state.targetSpeciesId);
+        const targetSp = state。settings.species.find(s => s.id === state.targetSpeciesId);
         if(!targetSp) { alert("请选择有效的统计物种"); return; }
 
         state.mode = 'counting';
-        Object.values(DOM.btns).forEach(b => { b.disabled = true; b.classList.remove('highlight'); });
+        Object。values(DOM。btns).forEach(b => { b。disabled = true; b。classList.remove('highlight'); });
         
-        document.getElementById('stats-panel').style.display = 'block';
-        document.getElementById('stats-target-name').innerText = targetSp.name;
-        document.getElementById('stats-target-name').style.color = targetSp.color;
+        document。getElementById('stats-panel')。style.display = 'block';
+        document.getElementById('stats-target-name')。innerText = targetSp.name;
+        document.getElementById('stats-target-name')。style。color = targetSp.color;
         document.getElementById('stats-target-name').style.fontWeight = "bold";
         document.getElementById('mode-info').innerText = "统计模式进行中...";
         
@@ -939,18 +1064,20 @@
         const container = document.getElementById('modal-view');
         container.innerHTML = '';
         const containerRect = container.getBoundingClientRect();
-        // 获取容器像素宽度，用于精准定位
         const VIEW_SIZE_PX = containerRect.width; 
 
         // 视图比例系数：1.2倍视野
-        const viewScale = 1.2;
-        const rangePct = q.sizePct * viewScale; // 视野覆盖的模拟区百分比
+        // 核心难点：q.wPct 和 q.hPct 可能不一致（在长方形地图中）
+        // 但我们需要在正方形的 Modal 视口中显示一个正方形的样方。
+        // 解决方案：建立局部坐标系，以样方中心为原点，物理米为单位。
         
-        // 绘制样方框 (红框)
+        const viewScale = 1.2; 
+        const viewMeters = q.wM * viewScale; // 视口覆盖的物理宽度（米）
+        
+        // 样方框在视口中的像素大小
+        const boxSizePx = (q.wM / viewMeters) * VIEW_SIZE_PX;
+        
         const box = document.createElement('div');
-        // 样方框占容器的比例 = q.sizePct / rangePct = 1 / 1.2
-        const boxSizePx = VIEW_SIZE_PX / viewScale; 
-        
         box.style.cssText = `
             width:${boxSizePx}px; height:${boxSizePx}px; 
             border:3px dashed #ff4757; 
@@ -960,33 +1087,42 @@
         `;
         container.appendChild(box);
 
-        // 计算边界
-        const rMinX = q.x - rangePct/2;
-        const rMinY = q.y - rangePct/2;
-        const rMaxX = q.x + rangePct/2;
-        const rMaxY = q.y + rangePct/2;
+        // 计算物理尺寸到百分比的换算因子
+        const widthM = state.settings.areaSize;
+        let heightM = widthM;
+        if(state.settings.shape === 'rect169') heightM = widthM * 9 / 16;
+        // 圆形视作正方形区域处理坐标（只是被裁剪了）
+        
+        // 样方中心的百分比坐标
+        const cxPct = q.x;
+        const cyPct = q.y;
 
         state.plants.forEach(p => {
-            // 判断是否在视野内
-            if (p.x >= rMinX && p.x <= rMaxX && p.y >= rMinY && p.y <= rMaxY) {
-                // 计算在 modal 容器内的像素坐标
-                const rx = (p.x - rMinX) / rangePct * VIEW_SIZE_PX;
-                const ry = (p.y - rMinY) / rangePct * VIEW_SIZE_PX;
-                
+            // 计算植物相对于样方中心的物理距离（米）
+            // p.x 是 0-100
+            const dxPct = p.x - cxPct; 
+            const dyPct = p.y - cyPct;
+            
+            const dxM = (dxPct / 100) * widthM;
+            const dyM = (dyPct / 100) * heightM;
+
+            // 检查是否在视口范围内 (视口宽 viewMeters)
+            if (Math.abs(dxM) <= viewMeters/2 && Math.abs(dyM) <= viewMeters/2) {
+                // 转换为 Modal 像素坐标
+                // 左上角是 (0,0)，中心是 (VIEW_SIZE_PX/2, VIEW_SIZE_PX/2)
+                const px = (dxM / viewMeters) * VIEW_SIZE_PX + VIEW_SIZE_PX/2;
+                const py = (dyM / viewMeters) * VIEW_SIZE_PX + VIEW_SIZE_PX/2;
+
                 const el = createPlantElement(p.size, p.color, p.shape, p.style);
                 el.style.position = 'absolute';
-                el.style.left = rx + 'px';
-                el.style.top = ry + 'px';
+                el.style.left = px + 'px';
+                el.style.top = py + 'px';
                 
-                // --- 高亮逻辑 ---
                 if (p.speciesId === state.targetSpeciesId) {
-                    // 目标植物：添加动画类
                     el.classList.add('plant-highlight');
                 } else {
-                    // 干扰植物：变暗
                     el.classList.add('plant-dimmed');
                 }
-
                 container.appendChild(el);
             }
         });
@@ -1009,9 +1145,11 @@
     }
 
     function calculateTrueCount(q) {
-        const half = q.sizePct / 2;
-        const l = q.x - half, r = q.x + half;
-        const t = q.y - half, b = q.y + half;
+        // 使用百分比边界检查
+        const halfW = q.wPct / 2;
+        const halfH = q.hPct / 2;
+        const l = q.x - halfW, r = q.x + halfW;
+        const t = q.y - halfH, b = q.y + halfH;
         const eps = 0.0001;
         
         let count = 0;
@@ -1026,51 +1164,68 @@
     }
 
     function checkAllCompleted() {
-        if (state.quadrats.every(q => q.userCount !== null)) {
-            let uSum = 0, tSum = 0;
-            state.quadrats.forEach(q => {
-                const area = q.wM * q.hM;
-                uSum += q.userCount / area;
-                tSum += q.trueCount / area;
+        if (state。quadrats。every(q => q.userCount !== null)) {
+            let uSum = 0， tSum = 0; // 密度总和
+            state。quadrats。forEach(q => {
+                const area = q。wM * q。hM;
+                uSum += q。userCount / area; // 单个样方的密度
+                tSum += q。trueCount / area;
             });
-            const uAvg = uSum / state.quadrats.length;
-            const tAvg = tSum / state.quadrats.length;
-            const err = tAvg === 0 ? (uAvg===0?0:100) : Math.abs(uAvg-tAvg)/tAvg*100;
+            const uAvg = uSum / state。quadrats。length; // 平均密度
+            
+            // 计算整个区域的真实平均密度（总数/总面积）而非样方平均
+            // 这样更符合生物统计逻辑：用户在估算种群密度，对比值应为真实种群密度
+            const targetTotal = state。plants。filter(p => p。speciesId === state。targetSpeciesId)。length;
+            
+            let totalArea = 0;
+            const w = state。settings。areaSize;
+            if(state。settings。shape === 'square') {
+                totalArea = w * w;
+            } else if (state。settings。shape === 'rect169') {
+                totalArea = w * (w * 9/16);
+            } else if (state。设置。shape === 'circle') {
+                totalArea = Math.PI * Math.pow(w/2, 2);
+            }
 
-            const spName = state.settings.species.find(s=>s.id === state.targetSpeciesId).name;
+            const trueDensity = targetTotal / totalArea;
 
-            document.getElementById('result-display').style.display = 'block';
-            document.getElementById('res-name').innerText = spName;
-            document.getElementById('user-density').innerText = uAvg.toFixed(4);
-            document.getElementById('true-density').innerText = tAvg.toFixed(4);
-            document.getElementById('error-rate').innerText = err.toFixed(2);
+            // 误差计算：比较用户的估算密度 vs 真实的种群密度
+            const err = trueDensity === 0 ? (uAvg===0?0:100) : Math.abs(uAvg - trueDensity)/trueDensity*100;
+
+            const spName = state。设置。species。find(s=>s。id === state.targetSpeciesId)。name;
+
+            document。getElementById('result-display')。style。display = 'block';
+            document。getElementById('res-name')。innerText = spName;
+            document。getElementById('user-density')。innerText = uAvg。toFixed(4);
+            document。getElementById('true-density')。innerText = trueDensity。toFixed(4);
+            document。getElementById('error-rate')。innerText = err。toFixed(2);
         }
     }
 
     function resetUIState() {
-        DOM.simArea.innerHTML = '';
-        document.getElementById('stats-panel').style.display = 'none';
-        document.getElementById('result-display').style.display = 'none';
-        document.getElementById('target-select-wrapper').style.pointerEvents = 'auto';
-        document.getElementById('target-select-wrapper').style.opacity = '1';
+        DOM。simArea。innerHTML = '';
+        document。getElementById('stats-panel')。style。display = 'none';
+        document。getElementById('result-display')。style。display = 'none';
+        document。getElementById('target-select-wrapper')。style。pointerEvents = 'auto';
+        document。getElementById('target-select-wrapper')。style。opacity = '1';
         
-        Object.values(DOM.btns).forEach(b => b.disabled = false);
-        document.getElementById('mode-info').innerText = "请选择操作模式";
+        Object。values(DOM。btns)。forEach(b => b。disabled = false);
+        document。getElementById('mode-info')。innerText = "请选择操作模式";
     }
 
-    function showToast(x, y, text) {
-        DOM.toast.innerText = text;
-        DOM.toast.style.left = x + 'px';
-        DOM.toast.style.top = y + 'px';
-        DOM.toast.classList.add('show');
-        setTimeout(() => DOM.toast.classList.remove('show'), 2000);
+    function showToast(x， y, text) {
+        DOM。toast。innerText = text;
+        DOM。toast。style。left = x + 'px';
+        DOM。toast。style。top = y + 'px';
+        DOM。toast。classList。add('show');
+        setTimeout(() => DOM。toast。classList。remove('show')， 2000);
     }
 
     function switchTab(t) {
-        document.querySelectorAll('.tab-content').forEach(e => e.classList.remove('active'));
-        document.querySelectorAll('.tab-btn').forEach(e => e.classList.remove('active'));
-        document.getElementById('tab-'+t).classList.add('active');
-        document.querySelectorAll('.tab-btn')[t==='main'?0:1].classList.add('active');
+        document。querySelectorAll('.tab-content')。forEach(e => e.classList.remove('active'));
+        document。querySelectorAll('.tab-btn')。forEach(e => e。classList。remove('active'));
+        document。getElementById('tab-'+t)。classList。add('active');
+        document。querySelectorAll('.tab-btn')[t==='main'?0:1]。classList。add('active');
     }
 
     init();
