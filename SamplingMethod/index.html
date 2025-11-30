@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>样方法模拟</title>
+    <title>多地形样方法模拟 v2.0</title>
     <style>
         /* --- CSS 变量定义 (支持深色模式) --- */
         :root {
@@ -545,33 +545,33 @@
                     </div>
                     <div>
                         <label>大小(px):</label>
-                        <input type="number" value="${sp。size}" min="2" max="50" onchange="updateSpeciesParam('${sp。id}', 'size', parseInt(this.value))">
+                        <input type="number" value="${sp.size}" min="2" max="50" onchange="updateSpeciesParam('${sp.id}', 'size', parseInt(this.value))">
                     </div>
                     <div>
                         <label>形状:</label>
-                        <select onchange="updateSpeciesParam('${sp。id}', 'shape', this.value)">
-                            <option value="circle" ${sp。shape=='circle'?'selected':''}>圆形</option>
-                            <option value="square" ${sp。shape=='square'?'selected':''}>正方形</option>
-                            <option value="triangle" ${sp。shape=='triangle'?'selected':''}>三角形</option>
-                            <option value="rhombus" ${sp。shape=='rhombus'?'selected':''}>菱形</option>
-                            <option value="star" ${sp。shape=='star'?'selected':''}>星形</option>
+                        <select onchange="updateSpeciesParam('${sp.id}', 'shape', this.value)">
+                            <option value="circle" ${sp.shape=='circle'?'selected':''}>圆形</option>
+                            <option value="square" ${sp.shape=='square'?'selected':''}>正方形</option>
+                            <option value="triangle" ${sp.shape=='triangle'?'selected':''}>三角形</option>
+                            <option value="rhombus" ${sp.shape=='rhombus'?'selected':''}>菱形</option>
+                            <option value="star" ${sp.shape=='star'?'selected':''}>星形</option>
                         </select>
                     </div>
                     <div>
                         <label>风格:</label>
-                        <select onchange="updateSpeciesParam('${sp。id}', 'style', this.value)">
-                            <option value="solid" ${sp。style=='solid'?'selected':''}>实心</option>
-                            <option value="hollow" ${sp。style=='hollow'?'selected':''}>空心</option>
+                        <select onchange="updateSpeciesParam('${sp.id}', 'style', this.value)">
+                            <option value="solid" ${sp.style=='solid'?'selected':''}>实心</option>
+                            <option value="hollow" ${sp.style=='hollow'?'selected':''}>空心</option>
                         </select>
                     </div>
                     <div style="grid-column: span 2; display:flex; gap:10px; align-items:center;">
                         <label style="margin:0;">颜色:</label>
-                        <input type="color" value="${sp。color}" onchange="updateSpeciesParam('${sp。id}', 'color', this.value)" style="flex:1; height:30px;">
+                        <input type="color" value="${sp.color}" onchange="updateSpeciesParam('${sp.id}', 'color', this.value)" style="flex:1; height:30px;">
                     </div>
                     <div style="grid-column: span 2;">
-                        <label>分布离散度 (0聚-1散): ${sp。dispersion}</label>
+                        <label>分布离散度 (0聚-1散): ${sp.dispersion}</label>
                         <input type="range" min="0" max="1" step="0.1" value="${sp.dispersion}" 
-                            onchange="updateSpeciesParam('${sp。id}', 'dispersion', parseFloat(this.value))"
+                            onchange="updateSpeciesParam('${sp.id}', 'dispersion', parseFloat(this.value))"
                             style="width:100%">
                     </div>
                 </div>
@@ -583,62 +583,62 @@
 
     function addNewSpecies() {
         const colors = ['#e74c3c', '#e67e22', '#f1c40f', '#2ecc71', '#3498db', '#9b59b6'];
-        const shapes = ['circle', 'square'， 'triangle'， 'star'];
-        const id = 's' + Date.当前(); 
-        const randColor = colors[state。设置。species.length % colors.length];
-        const randShape = shapes[state。设置。species.length % shapes.length];
+        const shapes = ['circle', 'square', 'triangle', 'star'];
+        const id = 's' + Date.now(); 
+        const randColor = colors[state.settings.species.length % colors.length];
+        const randShape = shapes[state.settings.species.length % shapes.length];
         
-        state.设置.species.push({
+        state.settings.species.push({
             id: id,
             name: `新物种 ${state.settings.species.length + 1}`,
             count: 50,
             size: 8,
-            shape: randShape，
-            style: 'solid'，
-            color: randColor，
+            shape: randShape,
+            style: 'solid',
+            color: randColor,
             dispersion: 0.8
         });
         renderSpeciesSettings();
     }
 
     function removeSpecies(id) {
-        if (state.设置.species.length <= 1) {
+        if (state.settings.species.length <= 1) {
             alert("至少保留一种植物！");
             return;
         }
-        state。设置。species = state。设置。species.filter(s => s.id !== id);
+        state.settings.species = state.settings.species.filter(s => s.id !== id);
         renderSpeciesSettings();
     }
 
-    function updateSpeciesParam(id， key, val) {
-        const sp = state。设置。species.find(s => s。id === id);
+    function updateSpeciesParam(id, key, val) {
+        const sp = state.settings.species.find(s => s.id === id);
         if(sp) sp[key] = val;
     }
 
     function updateMainTargetSelect() {
-        DOM。targetSelect。innerHTML = '';
-        state。设置。species。forEach(sp => {
-            const opt = document。createElement('option');
-            opt。value = sp。id;
-            opt。innerText = sp。name;
-            opt。style。color = sp。color; 
-            DOM。targetSelect。appendChild(opt);
+        DOM.targetSelect.innerHTML = '';
+        state.settings.species.forEach(sp => {
+            const opt = document.createElement('option');
+            opt.value = sp.id;
+            opt.innerText = sp.name;
+            opt.style.color = sp.color; 
+            DOM.targetSelect.appendChild(opt);
         });
     }
 
     function updateSettings() {
-        let size = parseInt(document。getElementById('setting-area-size')。value);
+        let size = parseInt(document.getElementById('setting-area-size').value);
         if(size < 1) size = 1; if(size > 1000) size = 1000;
         state.settings.areaSize = size;
-        state。设置。seed = document。getElementById('setting-seed')。value;
-        state。设置。shape = document。getElementById('setting-shape')。value;
+        state.settings.seed = document.getElementById('setting-seed').value;
+        state.settings.shape = document.getElementById('setting-shape').value;
         
         // 更新显示标签
         let h = size;
-        if(state.设置.shape === 'rect169') h = (size * 9 / 16).toFixed(1);
+        if(state.settings.shape === 'rect169') h = (size * 9 / 16).toFixed(1);
         
-        document.getElementById('area-scale-label')。innerText = size;
-        document.getElementById('area-scale-label-2')。innerText = state。设置。shape === 'circle' ? size : h;
+        document.getElementById('area-scale-label').innerText = size;
+        document.getElementById('area-scale-label-2').innerText = state.settings.shape === 'circle' ? size : h;
         
         const shapeNames = { 'square': '(正方形)', 'rect169': '(16:9)', 'circle': '(圆形 直径)' };
         document.getElementById('area-shape-label').innerText = shapeNames[state.settings.shape];
@@ -647,24 +647,24 @@
     function randomizeSeed() {
         const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
         let res = '';
-        for(let i=0; i<6; i++) res += chars。charAt(Math。floor(Math.random() * chars.length));
+        for(let i=0; i<6; i++) res += chars.charAt(Math.floor(Math.random() * chars.length));
         document.getElementById('setting-seed').value = res;
         updateSettings();
     }
 
     function shareConfiguration() {
         const config = {
-            a: state。settings.areaSize,
-            s: state。设置。seed,
-            sh: state。设置。shape,
-            sp: state.设置。species
+            a: state.settings.areaSize,
+            s: state.settings.seed,
+            sh: state.settings.shape,
+            sp: state.settings.species
         };
         const jsonStr = JSON.stringify(config);
         const encoded = encodeURIComponent(jsonStr);
-        const url = `${window。location.origin}${window.location.pathname}?cfg=${encoded}`;
+        const url = `${window.location.origin}${window.location.pathname}?cfg=${encoded}`;
         
-        navigator.clipboard.writeText(url).键，然后(() => {
-            showToast(window.innerWidth/2, window。innerHeight - 50, "✅ 链接已复制！");
+        navigator.clipboard.writeText(url).then(() => {
+            showToast(window.innerWidth/2, window.innerHeight - 50, "✅ 链接已复制！");
         }).catch(() => {
             prompt("复制链接:", url);
         });
@@ -954,13 +954,13 @@
         const id = state.nextId++;
         const el = document.createElement('div');
         el.className = 'quadrat';
-        el。style。width = wPct + '%';
-        el。style。height = hPct + '%';
+        el.style.width = wPct + '%';
+        el.style.height = hPct + '%';
         el.style.left = x + '%';
         el.style.top = y + '%';
-        el。innerText = state.quadrats.length + 1;
+        el.innerText = state.quadrats.length + 1;
         el.addEventListener('mousedown', (ev) => handleQuadratClick(ev, id));
-        el。addEventListener('touchstart'， (ev) => handleQuadratClick(ev, id));
+        el.addEventListener('touchstart', (ev) => handleQuadratClick(ev, id));
 
         DOM.simArea.appendChild(el);
         state.quadrats.push({ 
@@ -971,23 +971,23 @@
         });
     }
 
-    function handleQuadratClick(e， id) {
-        e。stopPropagation();
+    function handleQuadratClick(e, id) {
+        e.stopPropagation();
         const qIndex = state.quadrats.findIndex(q => q.id === id);
         const q = state.quadrats[qIndex];
 
         if (state.mode === 'counting') {
             openCountModal(q);
-        } else if (state。mode === 'delete') {
+        } else if (state.mode === 'delete') {
             q.element.remove();
-            state.quadrats.splice(qIndex， 1);
+            state.quadrats.splice(qIndex, 1);
             state.quadrats.forEach((item, idx) => item.element.innerText = idx + 1);
         } else if (state.mode === 'move') {
-            startDrag(e， q);
+            startDrag(e, q);
         }
     }
 
-    function startDrag(e， q) {
+    function startDrag(e, q) {
         const startX = e.clientX || e.touches[0].clientX;
         const startY = e.clientY || e.touches[0].clientY;
         const startL = parseFloat(q.element.style.left);
@@ -996,54 +996,54 @@
 
         const onMove = (evt) => {
             const cx = evt.clientX || evt.touches[0].clientX;
-            const cy = evt.clientY || evt.touches[0]。clientY;
+            const cy = evt.clientY || evt.touches[0].clientY;
             const dx = ((cx - startX)/rect.width)*100;
-            const dy = ((cy - startY)/rect。height)*100;
-            let nx = Math。max(q。wPct/2, Math.min(100-q.wPct/2, startL + dx));
+            const dy = ((cy - startY)/rect.height)*100;
+            let nx = Math.max(q.wPct/2, Math.min(100-q.wPct/2, startL + dx));
             let ny = Math.max(q.hPct/2, Math.min(100-q.hPct/2, startT + dy));
             
             // 简单的圆形边界限制（拖拽时）
-            if(state。设置。shape === 'circle') {
+            if(state.settings.shape === 'circle') {
                const cx = nx - 50; const cy = ny - 50;
                // 粗略限制中心点
                if(Math.sqrt(cx*cx + cy*cy) > (50 - Math.max(q.wPct, q.hPct)/2)) return;
             }
 
             q.element.style.left = nx + '%';
-            q.element。style。top = ny + '%';
+            q.element.style.top = ny + '%';
             q.tempX = nx; q.tempY = ny;
         };
         const onUp = () => {
             if(q.tempX) { q.x = q.tempX; q.y = q.tempY; }
-            document。removeEventListener('mousemove'， onMove);
-            document。removeEventListener('mouseup'， onUp);
-            document。removeEventListener('touchmove', onMove);
+            document.removeEventListener('mousemove', onMove);
+            document.removeEventListener('mouseup', onUp);
+            document.removeEventListener('touchmove', onMove);
             document.removeEventListener('touchend', onUp);
         };
-        document.addEventListener('mousemove'， onMove);
+        document.addEventListener('mousemove', onMove);
         document.addEventListener('mouseup', onUp);
-        document.addEventListener('touchmove'， onMove, {passive:false});
-        document.addEventListener('touchend'， onUp);
+        document.addEventListener('touchmove', onMove, {passive:false});
+        document.addEventListener('touchend', onUp);
     }
 
     // --- 统计逻辑 ---
 
     function startStatistics() {
-        if (state。quadrats.length === 0) {
+        if (state.quadrats.length === 0) {
             alert("请先放置样方");
             return;
         }
         
         state.targetSpeciesId = DOM.targetSelect.value;
-        const targetSp = state。settings.species.find(s => s.id === state.targetSpeciesId);
+        const targetSp = state.settings.species.find(s => s.id === state.targetSpeciesId);
         if(!targetSp) { alert("请选择有效的统计物种"); return; }
 
         state.mode = 'counting';
-        Object。values(DOM。btns).forEach(b => { b。disabled = true; b。classList.remove('highlight'); });
+        Object.values(DOM.btns).forEach(b => { b.disabled = true; b.classList.remove('highlight'); });
         
-        document。getElementById('stats-panel')。style.display = 'block';
-        document.getElementById('stats-target-name')。innerText = targetSp.name;
-        document.getElementById('stats-target-name')。style。color = targetSp.color;
+        document.getElementById('stats-panel').style.display = 'block';
+        document.getElementById('stats-target-name').innerText = targetSp.name;
+        document.getElementById('stats-target-name').style.color = targetSp.color;
         document.getElementById('stats-target-name').style.fontWeight = "bold";
         document.getElementById('mode-info').innerText = "统计模式进行中...";
         
@@ -1164,24 +1164,24 @@
     }
 
     function checkAllCompleted() {
-        if (state。quadrats。every(q => q.userCount !== null)) {
-            let uSum = 0， tSum = 0; // 密度总和
-            state。quadrats。forEach(q => {
-                const area = q。wM * q。hM;
+        if (state.quadrats.every(q => q.userCount !== null)) {
+            let uSum = 0, tSum = 0; // 密度总和
+            state.quadrats。forEach(q => {
+                const area = q.wM * q.hM;
                 uSum += q。userCount / area; // 单个样方的密度
                 tSum += q。trueCount / area;
             });
-            const uAvg = uSum / state。quadrats。length; // 平均密度
+            const uAvg = uSum / state.quadrats.length; // 平均密度
             
             // 计算整个区域的真实平均密度（总数/总面积）而非样方平均
             // 这样更符合生物统计逻辑：用户在估算种群密度，对比值应为真实种群密度
-            const targetTotal = state。plants。filter(p => p。speciesId === state。targetSpeciesId)。length;
+            const targetTotal = state.plants.filter(p => p.speciesId === state.targetSpeciesId).length;
             
             let totalArea = 0;
-            const w = state。settings。areaSize;
+            const w = state.settings.areaSize;
             if(state。settings。shape === 'square') {
                 totalArea = w * w;
-            } else if (state。settings。shape === 'rect169') {
+            } else if (state.settings.shape === 'rect169') {
                 totalArea = w * (w * 9/16);
             } else if (state。设置。shape === 'circle') {
                 totalArea = Math.PI * Math.pow(w/2, 2);
@@ -1192,7 +1192,7 @@
             // 误差计算：比较用户的估算密度 vs 真实的种群密度
             const err = trueDensity === 0 ? (uAvg===0?0:100) : Math.abs(uAvg - trueDensity)/trueDensity*100;
 
-            const spName = state。设置。species。find(s=>s。id === state.targetSpeciesId)。name;
+            const spName = state.settings.species.find(s=>s.id === state.targetSpeciesId).name;
 
             document。getElementById('result-display')。style。display = 'block';
             document。getElementById('res-name')。innerText = spName;
@@ -1203,14 +1203,14 @@
     }
 
     function resetUIState() {
-        DOM。simArea。innerHTML = '';
-        document。getElementById('stats-panel')。style。display = 'none';
-        document。getElementById('result-display')。style。display = 'none';
-        document。getElementById('target-select-wrapper')。style。pointerEvents = 'auto';
+        DOM.simArea.innerHTML = '';
+        document.getElementById('stats-panel').style.display = 'none';
+        document.getElementById('result-display').style.display = 'none';
+        document.getElementById('target-select-wrapper').style.pointerEvents = 'auto';
         document。getElementById('target-select-wrapper')。style。opacity = '1';
         
-        Object。values(DOM。btns)。forEach(b => b。disabled = false);
-        document。getElementById('mode-info')。innerText = "请选择操作模式";
+        Object。values(DOM。btns)。forEach(b => b.disabled = false);
+        document.getElementById('mode-info').innerText = "请选择操作模式";
     }
 
     function showToast(x， y, text) {
@@ -1218,14 +1218,14 @@
         DOM。toast。style。left = x + 'px';
         DOM。toast。style。top = y + 'px';
         DOM。toast。classList。add('show');
-        setTimeout(() => DOM。toast。classList。remove('show')， 2000);
+        setTimeout(() => DOM.toast.classList.remove('show')， 2000);
     }
 
     function switchTab(t) {
-        document。querySelectorAll('.tab-content')。forEach(e => e.classList.remove('active'));
-        document。querySelectorAll('.tab-btn')。forEach(e => e。classList。remove('active'));
-        document。getElementById('tab-'+t)。classList。add('active');
-        document。querySelectorAll('.tab-btn')[t==='main'?0:1]。classList。add('active');
+        document.querySelectorAll('.tab-content').forEach(e => e.classList.remove('active'));
+        document.querySelectorAll('.tab-btn').forEach(e => e.classList.remove('active'));
+        document.getElementById('tab-'+t).classList.add('active');
+        document。querySelectorAll('.tab-btn')[t==='main'?0:1]。classList.add('active');
     }
 
     init();
