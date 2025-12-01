@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>样方法模拟实验 (16:9 宽屏版)</title>
+    <title>样方法模拟实验 (带状样地版)</title>
     <style>
         :root {
             --primary-color: #2c3e50;
@@ -67,19 +67,21 @@
             display: flex;
             justify-content: center;
             align-items: center;
-            padding: 10px; /* 减小内边距以便在手机横屏下更好显示 */
+            padding: 20px; /* 增加一点内边距 */
         }
 
-        /* 核心区域: 改为 16:9 长方形 */
+        /* 核心区域: 改为动态长条形 */
         #simulation-area {
             width: 100%;
-            /* 限制最大宽度，防止在超宽屏上太扁，同时兼顾高度不超出一屏 */
-            max-width: 140vh; 
-            aspect-ratio: 16 / 9; /* 关键修改 */
+            /* 移除 max-width 以便填满宽度 */
+            /* aspect-ratio 将由 JS 动态控制 */
             background-color: #fff;
             border: 2px solid #333;
             position: relative;
             box-shadow: 0 0 15px rgba(0,0,0,0.1);
+            /* 保证在极其狭长的情况下也能看清 */
+            min-height: 40px; 
+            transition: aspect-ratio 0.3s ease;
         }
 
         .plant {
@@ -236,15 +238,18 @@
             <div class="section">
                 <div class="section-title">样方预设 (正方形)</div>
                 <div class="preset-scroll">
-                    <div class="preset-item selected" onclick="selectPreset(1, this)">1m</div>
-                    <div class="preset-item" onclick="selectPreset(2, this)">2m</div>
-                    <div class="preset-item" onclick="selectPreset(5, this)">5m</div>
+                    <!-- 移除了 2m 和 5m 选项，因为地块高度只有 1m -->
+                    <div class="preset-item selected" onclick="selectPreset(1, this)">1m (标准)</div>
+                    <div class="preset-item" onclick="selectPreset(0.5, this)">0.5m</div>
                     <div class="preset-item" onclick="selectPreset('custom', this)">自定义</div>
                 </div>
                 <div id="preset-info" class="info-display">当前选择: 边长 1m</div>
                 <div id="custom-input-div" style="display:none; align-items:center; gap:10px; margin-bottom:5px; font-size:13px;">
                     <label>边长(m):</label>
-                    <input type="number" id="custom-size-input" value="10" min="1" max="100" style="width:60px; padding:4px;">
+                    <input type="number" id="custom-size-input" value="1" min="0.1" max="1" step="0.1" style="width:60px; padding:4px;">
+                </div>
+                <div class="info-display" style="color: #e67e22;">
+                    注：由于样地高度固定为 1m，样方最大边长不能超过 1m。
                 </div>
             </div>
 
@@ -282,9 +287,12 @@
         <div id="tab-settings" class="tab-content">
             <div class="section">
                 <div class="setting-item">
-                    <label>区域<span style="color:#e74c3c">宽度</span> (m) - 16:9比例:</label>
-                    <input type="number" id="setting-area-size" value="16" onchange="updateSettings()">
-                    <div class="info-display" style="margin-top:4px;">实际区域: <span id="settings-area-w">16</span>m × <span id="settings-area-h">9</span>m</div>
+                    <label>区域<span style="color:#e74c3c">宽度</span> (m):</label>
+                    <input type="number" id="setting-area-size" value="10" min="2" max="100" onchange="updateSettings()">
+                    <div class="info-display" style="margin-top:4px;">
+                        物理尺寸: <span id="settings-area-w">10</span>m (宽) × 1m (高)<br>
+                        <span style="font-size:11px; color:#999;">高度已锁定为 1m</span>
+                    </div>
                 </div>
                 <!-- 随机种子设置 -->
                 <div class="setting-item">
@@ -293,15 +301,16 @@
                         <input type="number" id="setting-seed" value="12345" style="flex:1; padding:5px; border:1px solid #ddd; border-radius:4px;" onchange="updateSettings()">
                         <button class="btn" style="width: auto; padding: 0 12px;" onclick="randomizeSeed()" title="生成随机种子">🎲</button>
                     </div>
-                    <div class="info-display" style="margin-top:5px; margin-bottom:0;">修改种子或点击重置后，植物分布将改变，但相同种子分布永远一致。</div>
+                    <div class="info-display" style="margin-top:5px; margin-bottom:0;">修改种子或点击重置后，植物分布将改变。</div>
                 </div>
 
                 <div class="setting-item">
-                    <label>植物数量 (1k-4k): <span id="plant-count-val">2000</span></label>
+                    <label>植物数量 (100-500): <span id="plant-count-val">200</span></label>
                     <div class="range-wrap">
-                        <span>1k</span>
-                        <input type="range" id="setting-plant-count" min="1000" max="4000" value="2000" oninput="updateSettingsUI();" onchange="updateSettings()">
-                        <span>4k</span>
+                        <span>100</span>
+                        <!-- 调整默认数量，因为面积变小了 -->
+                        <input type="range" id="setting-plant-count" min="100" max="500" value="200" oninput="updateSettingsUI();" onchange="updateSettings()">
+                        <span>500</span>
                     </div>
                 </div>
                 <div class="setting-item">
@@ -318,9 +327,10 @@
     </div>
 
     <div id="simulation-container">
+        <!-- 去掉了外层的 16:9 限制 -->
         <div id="simulation-area"></div>
         <div style="position: absolute; bottom: 5px; right: 10px; font-size: 12px; color: #555; background:rgba(255,255,255,0.7); padding:2px 5px; border-radius:3px; pointer-events: none;">
-            区域: <span id="area-scale-label">16</span>m(宽) x <span id="area-scale-label-h">9</span>m(高)
+            区域: <span id="area-scale-label">10</span>m × 1m
         </div>
     </div>
 
@@ -341,13 +351,14 @@
     </div>
 
 <script>
-    const ASPECT_RATIO = 16 / 9; // 定义长宽比常量
+    // 物理高度固定为 1m
+    const PHYSICAL_HEIGHT = 1; 
 
     const state = {
         mode: null, 
-        // areaSize 指的是区域的“宽度”
-        settings: { areaSize: 16, plantCount: 2000, dispersion: 0, seed: 12345 },
-        currentPreset: 1, customSize: 10,
+        // areaSize 仅代表宽度，高度固定为1
+        settings: { areaSize: 10, plantCount: 200, dispersion: 0, seed: 12345 },
+        currentPreset: 1, customSize: 0.5,
         plants: [], quadrats: [],
         nextId: 1
     };
@@ -373,7 +384,7 @@
 
     function init() {
         updateSettingsUI();
-        updateSettings(); // 强制更新一次标签
+        updateSettings(); // 强制更新
         generatePlants();
         setupEventListeners();
     }
@@ -402,13 +413,13 @@
             state.settings.seed = seedInput;
         }
 
-        // 计算高度（仅用于显示）
-        const heightM = (state.settings.areaSize / ASPECT_RATIO).toFixed(2);
+        // 关键修改：动态设置容器的 CSS aspect-ratio
+        // 视觉比例 = 物理宽度 / 物理高度 (1)
+        DOM.simArea.style.aspectRatio = `${state.settings.areaSize} / ${PHYSICAL_HEIGHT}`;
 
+        // 更新文本显示
         document.getElementById('area-scale-label').innerText = state.settings.areaSize;
-        document.getElementById('area-scale-label-h').innerText = heightM;
         document.getElementById('settings-area-w').innerText = state.settings.areaSize;
-        document.getElementById('settings-area-h').innerText = heightM;
     }
 
     function randomizeSeed() {
@@ -433,11 +444,13 @@
         state.plants = [];
         
         const rng = createSeededRandom(state.settings.seed);
-        const plantSize = 4;
+        // 植物显示稍微调小一点，适应更窄的区域
+        const plantSize = 3;
 
         const clusters = Math.max(1, Math.floor(state.settings.plantCount / 20));
         const clusterCenters = [];
         
+        // 生成聚类中心 (0-100%)
         for(let i=0; i<clusters; i++) {
             clusterCenters.push({x: rng() * 100, y: rng() * 100});
         }
@@ -450,6 +463,7 @@
             } else {
                 const centerIdx = Math.floor(rng() * clusters);
                 const center = clusterCenters[centerIdx];
+                // 偏移量在窄区域需要注意y轴不要溢出太多，但这里是0-100%坐标系，逻辑通用
                 const offset = () => (rng() - 0.5) * 15;
                 x = center.x + offset();
                 y = center.y + offset();
@@ -487,7 +501,9 @@
     }
 
     document.getElementById('custom-size-input').addEventListener('input', (e) => {
-        state.customSize = parseInt(e.target.value) || 1;
+        let val = parseFloat(e.target.value);
+        if(val > 1) val = 1; // 强制限制
+        state.customSize = val || 0.1;
         document.getElementById('preset-info').innerText = `当前选择: 自定义 ${state.customSize}m`;
     });
 
@@ -544,7 +560,6 @@
         addQuadrat(xPct, yPct, clientX, clientY);
     }
 
-    // 更新后的边界限制，需分别处理宽高的百分比
     function clampPosition(x, y, wPct, hPct) {
         const halfW = wPct / 2;
         const halfH = hPct / 2;
@@ -556,24 +571,27 @@
     function addQuadrat(initialX, initialY, clientX, clientY) {
         let sizeM = state.currentPreset === 'custom' ? state.customSize : state.currentPreset;
         
-        // 关键逻辑：计算百分比尺寸
+        // 关键逻辑修改：百分比尺寸计算
+        // 区域高度现在固定为 1m
+        if(sizeM > 1) sizeM = 1; // 安全防御
+
         // 宽度百分比 = 样方边长 / 区域总宽度
         const wPct = (sizeM / state.settings.areaSize) * 100;
-        // 高度百分比 = 宽度百分比 * 长宽比 (为了在16:9的区域里画出正方形)
-        // 解释：区域高度是宽度的 9/16，所以同样的物理长度占高度的比例要大 16/9 倍
-        const hPct = wPct * ASPECT_RATIO;
+        
+        // 高度百分比 = 样方边长 / 区域总高度 (固定为1)
+        // 1m 的样方将占据 100% 的高度
+        const hPct = (sizeM / PHYSICAL_HEIGHT) * 100;
 
         let pos = clampPosition(initialX, initialY, wPct, hPct);
         let finalX = pos.x;
         let finalY = pos.y;
 
-        // 碰撞检测：现在需要在百分比坐标系下处理矩形碰撞
+        // 碰撞检测
         let overlap = false;
         for (let q of state.quadrats) {
             const dx = Math.abs(finalX - q.x);
             const dy = Math.abs(finalY - q.y);
             
-            // 阈值：两个样方宽度和的一半，高度和的一半
             const minW = (wPct + q.wPct) / 2;
             const minH = (hPct + q.hPct) / 2;
             
@@ -611,10 +629,10 @@
             id: id,
             x: x, 
             y: y, 
-            wM: sizeM, // 物理边长（宽=高）
+            wM: sizeM, 
             hM: sizeM,
-            wPct: wPct, // 宽度百分比
-            hPct: hPct, // 高度百分比
+            wPct: wPct,
+            hPct: hPct,
             userCount: null,
             element: el
         });
@@ -718,7 +736,6 @@
         const container = document.getElementById('modal-view');
         container.innerHTML = '';
 
-        // 在模态框里，我们需要把长方形坐标系里的一个局部正方形区域，映射到正方形的 DOM 视图里
         const viewScale = 1.2;
         const boxSizePx = 200 / viewScale; 
 
@@ -733,7 +750,6 @@
         box.style.transform = 'translate(-50%, -50%)';
         container.appendChild(box);
 
-        // 计算视野覆盖的百分比范围（以样方为中心，扩大一点）
         const rangeWidthPct = q.wPct * viewScale;
         const rangeHeightPct = q.hPct * viewScale;
 
@@ -744,8 +760,7 @@
 
         state.plants.forEach(p => {
             if (p.x >= rangeMinX && p.x <= rangeMaxX && p.y >= rangeMinY && p.y <= rangeMaxY) {
-                // 将区域内的植物坐标映射到 200x200 的模态框坐标系
-                // 关键：x用宽度百分比算，y用高度百分比算
+                // 坐标映射
                 const relX = (p.x - rangeMinX) / rangeWidthPct * 200;
                 const relY = (p.y - rangeMinY) / rangeHeightPct * 200;
                 
@@ -786,7 +801,6 @@
     }
 
     function calculateTrueCount(q) {
-        // 使用各自维度的百分比进行计算
         const halfW = q.wPct / 2;
         const halfH = q.hPct / 2;
         const left = q.x - halfW;
@@ -800,11 +814,11 @@
         state.plants.forEach(p => {
             let inX = false;
             if (p.x > left + eps && p.x < right - eps) inX = true;
-            else if (Math.abs(p.x - left) <= eps) inX = true; // 压线算
+            else if (Math.abs(p.x - left) <= eps) inX = true; 
 
             let inY = false;
             if (p.y > top + eps && p.y < bottom - eps) inY = true;
-            else if (Math.abs(p.y - top) <= eps) inY = true; // 压线算
+            else if (Math.abs(p.y - top) <= eps) inY = true; 
 
             if (inX && inY) count++;
         });
@@ -821,7 +835,6 @@
     function showFinalResults() {
         let totalDensity = 0;
         state.quadrats.forEach(q => {
-            // 样方是正方形，面积计算仍然是 边长*边长
             totalDensity += q.userCount / (q.wM * q.wM);
         });
         const userAvg = totalDensity / state.quadrats.length;
