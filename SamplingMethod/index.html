@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>多地形样方法模拟 v2.1 (环形增强版)</title>
+    <title>多地形样方法模拟</title>
     <style>
         /* --- CSS 变量定义 (支持深色模式) --- */
         :root {
@@ -1349,4 +1349,29 @@
         document.getElementById('stats-panel').style.display = 'none';
         document.getElementById('result-display').style.display = 'none';
         document.getElementById('target-select-wrapper').style.pointerEvents = 'auto';
-        document.getElemen
+        document.getElementById('target-select-wrapper').style.opacity = '1';
+        
+        Object.values(DOM.btns).forEach(b => b.disabled = false);
+        document.getElementById('mode-info').innerText = "请选择操作模式";
+    }
+
+    function showToast(x, y, text) {
+        DOM.toast.innerText = text;
+        DOM.toast.style.left = x + 'px';
+        DOM.toast.style.top = y + 'px';
+        DOM.toast.classList.add('show');
+        setTimeout(() => DOM.toast.classList.remove('show'), 2000);
+    }
+
+    function switchTab(t) {
+        document.querySelectorAll('.tab-content').forEach(e => e.classList.remove('active'));
+        document.querySelectorAll('.tab-btn').forEach(e => e.classList.remove('active'));
+        document.getElementById('tab-'+t).classList.add('active');
+        document.querySelectorAll('.tab-btn')[t==='main'?0:1].classList.add('active');
+    }
+
+    init();
+
+</script>
+</body>
+</html>
