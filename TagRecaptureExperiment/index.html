@@ -1,15 +1,19 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
+
 <head>
     <meta charset="UTF-8">
     <title>标记重捕模拟实验</title>
+    <!-- 引入弹窗样式 -->
+    <link rel="stylesheet" href="../modules/qr-popup/css/qr-popup.css">
     <style>
         * {
             box-sizing: border-box;
             user-select: none;
         }
 
-        body, html {
+        body,
+        html {
             margin: 0;
             padding: 0;
             height: 100%;
@@ -30,7 +34,7 @@
             border-right: 1px solid #ddd;
             display: flex;
             flex-direction: column;
-            box-shadow: 2px 0 5px rgba(0,0,0,0.05);
+            box-shadow: 2px 0 5px rgba(0, 0, 0, 0.05);
             z-index: 10;
         }
 
@@ -126,13 +130,27 @@
 
         button.secondary {
             background-color: #ff9800;
+            justify-content: center;
+            /* 辅助按钮文字居中 */
         }
+
         button.secondary:hover {
             background-color: #f57c00;
         }
 
+        /* 新增分享按钮样式 */
+        button.share-btn {
+            background-color: #607d8b;
+            justify-content: center;
+            margin-top: 15px;
+        }
+
+        button.share-btn:hover {
+            background-color: #455a64;
+        }
+
         .btn-count {
-            background: rgba(255,255,255,0.3);
+            background: rgba(255, 255, 255, 0.3);
             padding: 2px 8px;
             border-radius: 12px;
             font-size: 16px;
@@ -153,15 +171,30 @@
             margin-bottom: 20px;
         }
 
-        .log-entry { margin-bottom: 4px; border-bottom: 1px dashed #eee; padding-bottom: 2px; }
-        .log-info { color: #0277bd; }
-        .log-success { color: #2e7d32; font-weight: bold; }
-        .log-warn { color: #f57f17; }
-        .log-result { 
-            background-color: #fff3e0; 
-            border-left: 4px solid #ff9800; 
-            padding: 8px; 
-            margin-top: 5px; 
+        .log-entry {
+            margin-bottom: 4px;
+            border-bottom: 1px dashed #eee;
+            padding-bottom: 2px;
+        }
+
+        .log-info {
+            color: #0277bd;
+        }
+
+        .log-success {
+            color: #2e7d32;
+            font-weight: bold;
+        }
+
+        .log-warn {
+            color: #f57f17;
+        }
+
+        .log-result {
+            background-color: #fff3e0;
+            border-left: 4px solid #ff9800;
+            padding: 8px;
+            margin-top: 5px;
             color: #d84315;
             font-weight: bold;
         }
@@ -170,17 +203,19 @@
         .settings-group {
             margin-bottom: 10px;
         }
-        .settings-group label { 
-            display: block; 
-            margin-bottom: 5px; 
-            font-size: 18px; 
-            color: #666; 
+
+        .settings-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-size: 18px;
+            color: #666;
         }
-        .settings-group input { 
-            width: 100%; 
-            padding: 8px; 
-            border: 1px solid #ccc; 
-            border-radius: 4px; 
+
+        .settings-group input {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
             font-size: 16px;
         }
 
@@ -188,19 +223,23 @@
         #simulation-area {
             flex: 1;
             position: relative;
-            background-color: #81C784; 
+            background-color: #81C784;
             overflow: hidden;
             cursor: crosshair;
         }
 
-        canvas { display: block; width: 100%; height: 100%; }
+        canvas {
+            display: block;
+            width: 100%;
+            height: 100%;
+        }
 
         .tooltip {
             position: absolute;
             top: 20px;
             left: 50%;
             transform: translateX(-50%);
-            background: rgba(0,0,0,0.8);
+            background: rgba(0, 0, 0, 0.8);
             color: white;
             padding: 8px 20px;
             border-radius: 20px;
@@ -211,381 +250,492 @@
         }
     </style>
 </head>
+
 <body>
 
-<div id="app">
-    <div id="control-panel">
-        <h2>标记重捕实验</h2>
-        
-        <div class="tab-container">
-            <div class="tab active" data-tab="main">主要功能</div>
-            <div class="tab" data-tab="settings">设置</div>
-        </div>
-        
-        <div class="tab-content active" id="main-tab">
-            <div id="status-text" class="status-box">请点击"重置"初始化实验</div>
+    <div id="app">
+        <div id="control-panel">
+            <h2>标记重捕实验</h2>
 
-            <div class="btn-group">
-                <button id="btn-start-1" onclick="startCapture1()" disabled>
-                    <span>1. 开始第一次捕获</span>
-                    <span id="count-1" class="btn-count">0/0</span>
-                </button>
-                <button id="btn-mark" onclick="markAndRelease()" disabled>
-                    <span>2. 标记并释放</span>
-                </button>
-                <button id="btn-start-2" onclick="startCapture2()" disabled>
-                    <span>3. 开始第二次捕获</span>
-                    <span id="count-2" class="btn-count">0/0</span>
-                </button>
-                <button id="btn-calculate" onclick="calculateResult()" disabled>
-                    <span>4. 计算结果</span>
-                </button>
-                <button class="secondary" onclick="resetExperiment()">重置 / 生成动物</button>
+            <div class="tab-container">
+                <div class="tab active" data-tab="main">主要功能</div>
+                <div class="tab" data-tab="settings">设置</div>
             </div>
 
-            <div class="log-area" id="log-content"></div>
+            <div class="tab-content active" id="main-tab">
+                <div id="status-text" class="status-box">请点击"重置"初始化实验</div>
+
+                <div class="btn-group">
+                    <button id="btn-start-1" onclick="startCapture1()" disabled>
+                        <span>1. 开始第一次捕获</span>
+                        <span id="count-1" class="btn-count">0/0</span>
+                    </button>
+                    <button id="btn-mark" onclick="markAndRelease()" disabled>
+                        <span>2. 标记并释放</span>
+                    </button>
+                    <button id="btn-start-2" onclick="startCapture2()" disabled>
+                        <span>3. 开始第二次捕获</span>
+                        <span id="count-2" class="btn-count">0/0</span>
+                    </button>
+                    <button id="btn-calculate" onclick="calculateResult()" disabled>
+                        <span>4. 计算结果</span>
+                    </button>
+                    <button class="secondary" onclick="resetExperiment()">重置 / 生成动物</button>
+                </div>
+
+                <div class="log-area" id="log-content"></div>
+            </div>
+
+            <div class="tab-content" id="settings-tab">
+                <div class="settings-group">
+                    <label>动物总数 (N)</label>
+                    <input type="number" id="setting-count" value="100" min="10" max="2000">
+                </div>
+                <div class="settings-group">
+                    <label>移动速度 (1-10)</label>
+                    <input type="number" id="setting-speed" value="1" min="1" max="10">
+                </div>
+                <div class="settings-group">
+                    <label>动物大小 (1-30)</label>
+                    <input type="number" id="setting-size" value="30" min="1" max="30">
+                </div>
+                <div class="settings-group">
+                    <label>第一次捕获数量限制</label>
+                    <input type="number" id="setting-limit1" value="20" min="5" max="100">
+                </div>
+                <div class="settings-group">
+                    <label>第二次捕获数量限制</label>
+                    <input type="number" id="setting-limit2" value="10" min="5" max="100">
+                </div>
+
+                <!-- 生成分享链接按钮 -->
+                <button class="secondary share-btn" onclick="generateShareLink()">
+                    🔗 生成分享链接
+                </button>
+            </div>
         </div>
-        
-        <div class="tab-content" id="settings-tab">
-            <div class="settings-group">
-                <label>动物总数 (N)</label>
-                <input type="number" id="setting-count" value="100" min="10" max="2000">
-            </div>
-            <div class="settings-group">
-                <label>移动速度 (1-10)</label>
-                <input type="number" id="setting-speed" value="1" min="1" max="10">
-            </div>
-            <div class="settings-group">
-                <label>动物大小 (1-30)</label>
-                <input type="number" id="setting-size" value="30" min="1" max="30">
-            </div>
-            <div class="settings-group">
-                <label>第一次捕获数量限制</label>
-                <input type="number" id="setting-limit1" value="20" min="5" max="100">
-            </div>
-            <div class="settings-group">
-                <label>第二次捕获数量限制</label>
-                <input type="number" id="setting-limit2" value="10" min="5" max="100">
-            </div>
+
+        <div id="simulation-area">
+            <canvas id="simCanvas"></canvas>
+            <div id="canvas-tooltip" class="tooltip">准备就绪</div>
         </div>
     </div>
 
-    <div id="simulation-area">
-        <canvas id="simCanvas"></canvas>
-        <div id="canvas-tooltip" class="tooltip">准备就绪</div>
-    </div>
-</div>
+    <!-- 引入依赖库 -->
+    <script src="../modules/qr-popup/js/qrcode.min.js"></script>
+    <!-- 引入功能模块 -->
+    <script src="../modules/qr-popup/js/qr-popup.js"></script>
 
-<script>
-    // --- 核心变量 ---
-    const canvas = document.getElementById('simCanvas');
-    const ctx = canvas.getContext('2d');
-    const container = document.getElementById('simulation-area');
+    <script>
+        // --- 核心变量 ---
+        const canvas = document.getElementById('simCanvas');
+        const ctx = canvas.getContext('2d');
+        const container = document.getElementById('simulation-area');
 
-    // 实验数据
-    let N_real = 200;
-    let M = 0; // 第一次标记数
-    let n = 0; // 第二次捕获总数
-    let m = 0; // 第二次重捕标记数
-    let N_est = 0; 
+        // 实验数据
+        let N_real = 200;
+        let M = 0; // 第一次标记数
+        let n = 0; // 第二次捕获总数
+        let m = 0; // 第二次重捕标记数
+        let N_est = 0;
 
-    // 状态机
-    // states: 'IDLE', 'READY_1', 'CAPTURING_1', 'MARKED', 'READY_2', 'CAPTURING_2', 'FINISHED'
-    let currentState = 'IDLE';
+        // 状态机
+        // states: 'IDLE', 'READY_1', 'CAPTURING_1', 'MARKED', 'READY_2', 'CAPTURING_2', 'FINISHED'
+        let currentState = 'IDLE';
 
-    let animals = [];
-    let animalSize = 4;
-    let captureLimit1 = 30;
-    let captureLimit2 = 40;
-    let speedMultiplier = 3;
-    let animationId;
+        let animals = [];
+        let animalSize = 4;
+        let captureLimit1 = 30;
+        let captureLimit2 = 40;
+        let speedMultiplier = 3;
+        let animationId;
 
-    // SVG 图像对象
-    let imgUnmarked = new Image();
-    let imgMarked = new Image();
-    let imagesLoaded = 0;
-    
-    // 加载 SVG 图像
-    function loadImages() {
-        return new Promise((resolve) => {
-            function checkAllLoaded() {
-                imagesLoaded++;
-                if (imagesLoaded === 2) {
-                    resolve();
-                }
-            }
-            
-            imgUnmarked.onload = checkAllLoaded;
-            imgMarked.onload = checkAllLoaded;
-            
-            imgUnmarked.src = 'unmarked.svg';
-            imgMarked.src = 'marked.svg';
-        });
-    }
+        // SVG 图像对象
+        let imgUnmarked = new Image();
+        let imgMarked = new Image();
+        let imagesLoaded = 0;
 
-    // --- 初始化 ---
-    function resizeCanvas() {
-        canvas.width = container.clientWidth;
-        canvas.height = container.clientHeight;
-    }
-    window.addEventListener('resize', resizeCanvas);
-    resizeCanvas();
-
-    // --- 标签页切换 ---
-    document.querySelectorAll('.tab').forEach(tab => {
-        tab.addEventListener('click', () => {
-            // 移除所有激活状态
-            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-            document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
-            
-            // 激活当前标签
-            tab.classList.add('active');
-            document.getElementById(`${tab.dataset.tab}-tab`).classList.add('active');
-        });
-    });
-
-    // --- 鼠标交互：点击捕捉动物 ---
-    canvas.addEventListener('mousedown', (e) => {
-        // 只有在捕获状态下才允许点击捕捉
-        if (currentState !== 'CAPTURING_1' && currentState !== 'CAPTURING_2') {
-            return;
-        }
-
-        const rect = canvas.getBoundingClientRect();
-        const scaleX = canvas.width / rect.width;
-        const scaleY = canvas.height / rect.height;
-        const clickX = (e.clientX - rect.left) * scaleX;
-        const clickY = (e.clientY - rect.top) * scaleY;
-
-        // 查找点击的动物
-        for (let animal of animals) {
-            if (animal.isTrapped) continue; // 跳过已捕获的
-            
-            const dx = animal.x - clickX;
-            const dy = animal.y - clickY;
-            const distance = Math.sqrt(dx*dx + dy*dy);
-            
-            if (distance <= animal.size) {
-                // 捕获这个动物
-                animal.isTrapped = true;
-                
-                // 更新捕获计数
-                if (currentState === 'CAPTURING_1') {
-                    M = animals.filter(a => a.isTrapped).length;
-                    updateButtonCount('count-1', M, captureLimit1);
-                    
-                    // 检查是否达到限制
-                    if (M >= captureLimit1) {
-                        endCapture1();
-                    }
-                } else if (currentState === 'CAPTURING_2') {
-                    n = animals.filter(a => a.isTrapped).length;
-                    m = animals.filter(a => a.isTrapped && a.isMarked).length;
-                    updateButtonCount('count-2', n, captureLimit2);
-                    
-                    // 检查是否达到限制
-                    if (n >= captureLimit2) {
-                        endCapture2();
+        // 加载 SVG 图像
+        function loadImages()
+        {
+            return new Promise((resolve) =>
+            {
+                function checkAllLoaded()
+                {
+                    imagesLoaded++;
+                    if (imagesLoaded === 2)
+                    {
+                        resolve();
                     }
                 }
-                
-                break; // 只捕获一个动物
+
+                imgUnmarked.onload = checkAllLoaded;
+                imgMarked.onload = checkAllLoaded;
+
+                // 注意：这里假设SVG文件在同级目录，如果不同请自行调整
+                imgUnmarked.src = 'unmarked.svg';
+                imgMarked.src = 'marked.svg';
+            });
+        }
+
+        // --- 初始化 ---
+        function resizeCanvas()
+        {
+            canvas.width = container.clientWidth;
+            canvas.height = container.clientHeight;
+        }
+        window.addEventListener('resize', resizeCanvas);
+        resizeCanvas();
+
+        // --- 标签页切换 ---
+        document.querySelectorAll('.tab').forEach(tab =>
+        {
+            tab.addEventListener('click', () =>
+            {
+                // 移除所有激活状态
+                document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+                document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+
+                // 激活当前标签
+                tab.classList.add('active');
+                document.getElementById(`${tab.dataset.tab}-tab`).classList.add('active');
+            });
+        });
+
+        // --- URL 配置功能 ---
+
+        /**
+         * 读取URL参数并应用到设置输入框
+         */
+        function applyUrlSettings()
+        {
+            const params = new URLSearchParams(window.location.search);
+
+            // 参数映射关系
+            const mappings = {
+                'N': 'setting-count',   // 动物总数
+                'sp': 'setting-speed',  // 速度
+                'sz': 'setting-size',   // 大小
+                'l1': 'setting-limit1', // 限制1
+                'l2': 'setting-limit2'  // 限制2
+            };
+
+            for (const [key, id] of Object.entries(mappings))
+            {
+                if (params.has(key))
+                {
+                    const val = params.get(key);
+                    // 简单的验证，确保是数字
+                    if (!isNaN(val))
+                    {
+                        document.getElementById(id).value = val;
+                    }
+                }
             }
         }
-    });
 
-    // --- 动物类 ---
-    class Animal {
-        constructor() {
-            this.x = Math.random() * (canvas.width - 10);
-            this.y = Math.random() * (canvas.height - 10);
-            const angle = Math.random() * Math.PI * 2;
-            this.vx = Math.cos(angle);
-            this.vy = Math.sin(angle);
-            this.size = animalSize;
-            this.isMarked = false;
-            this.isTrapped = false;
+        /**
+         * 生成包含当前设置的分享链接并调用弹窗
+         */
+        function generateShareLink()
+        {
+            const baseUrl = window.location.href.split('?')[0];
+            const params = new URLSearchParams();
+
+            // 从DOM读取当前设置值
+            params.set('N', document.getElementById('setting-count').value);
+            params.set('sp', document.getElementById('setting-speed').value);
+            params.set('sz', document.getElementById('setting-size').value);
+            params.set('l1', document.getElementById('setting-limit1').value);
+            params.set('l2', document.getElementById('setting-limit2').value);
+
+            const shareUrl = `${baseUrl}?${params.toString()}`;
+
+            // 调用弹窗模块
+            if (window.QrPopupModule && typeof window.QrPopupModule.show === 'function')
+            {
+                window.QrPopupModule.show(shareUrl);
+            } else
+            {
+                console.error('QrPopupModule not loaded.');
+                prompt("模块加载失败，请手动复制链接：", shareUrl);
+            }
         }
 
-        update() {
-            if (this.isTrapped) return; // 已经被抓的，不动
+        // --- 鼠标交互：点击捕捉动物 ---
+        canvas.addEventListener('mousedown', (e) =>
+        {
+            // 只有在捕获状态下才允许点击捕捉
+            if (currentState !== 'CAPTURING_1' && currentState !== 'CAPTURING_2')
+            {
+                return;
+            }
 
-            // 正常移动
-            this.x += this.vx * speedMultiplier;
-            this.y += this.vy * speedMultiplier;
+            const rect = canvas.getBoundingClientRect();
+            const scaleX = canvas.width / rect.width;
+            const scaleY = canvas.height / rect.height;
+            const clickX = (e.clientX - rect.left) * scaleX;
+            const clickY = (e.clientY - rect.top) * scaleY;
 
-            if (this.x <= 0 || this.x >= canvas.width) this.vx *= -1;
-            if (this.y <= 0 || this.y >= canvas.height) this.vy *= -1;
-            
-            this.x = Math.max(0, Math.min(canvas.width, this.x));
-            this.y = Math.max(0, Math.min(canvas.height, this.y));
-        }
+            // 查找点击的动物
+            for (let animal of animals)
+            {
+                if (animal.isTrapped) continue; // 跳过已捕获的
 
-        draw() {
-            // 使用SVG图像绘制动物
-            const img = this.isMarked ? imgMarked : imgUnmarked;
-            const size = this.size * 2; // 调整图像大小
-            
-            if (imagesLoaded === 2) {
-                // 绘制SVG图像
-                ctx.drawImage(img, this.x - size/2, this.y - size/2, size, size);
-            } else {
-                // 备用：如果图像未加载完成，使用圆形绘制
-                ctx.beginPath();
-                ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
-                
-                if (this.isMarked) {
-                    ctx.fillStyle = '#424242';
-                    ctx.fill();
-                    
+                const dx = animal.x - clickX;
+                const dy = animal.y - clickY;
+                const distance = Math.sqrt(dx * dx + dy * dy);
+
+                if (distance <= animal.size)
+                {
+                    // 捕获这个动物
+                    animal.isTrapped = true;
+
+                    // 更新捕获计数
+                    if (currentState === 'CAPTURING_1')
+                    {
+                        M = animals.filter(a => a.isTrapped).length;
+                        updateButtonCount('count-1', M, captureLimit1);
+
+                        // 检查是否达到限制
+                        if (M >= captureLimit1)
+                        {
+                            endCapture1();
+                        }
+                    } else if (currentState === 'CAPTURING_2')
+                    {
+                        n = animals.filter(a => a.isTrapped).length;
+                        m = animals.filter(a => a.isTrapped && a.isMarked).length;
+                        updateButtonCount('count-2', n, captureLimit2);
+
+                        // 检查是否达到限制
+                        if (n >= captureLimit2)
+                        {
+                            endCapture2();
+                        }
+                    }
+
+                    break; // 只捕获一个动物
+                }
+            }
+        });
+
+        // --- 动物类 ---
+        class Animal
+        {
+            constructor()
+            {
+                this.x = Math.random() * (canvas.width - 10);
+                this.y = Math.random() * (canvas.height - 10);
+                const angle = Math.random() * Math.PI * 2;
+                this.vx = Math.cos(angle);
+                this.vy = Math.sin(angle);
+                this.size = animalSize;
+                this.isMarked = false;
+                this.isTrapped = false;
+            }
+
+            update()
+            {
+                if (this.isTrapped) return; // 已经被抓的，不动
+
+                // 正常移动
+                this.x += this.vx * speedMultiplier;
+                this.y += this.vy * speedMultiplier;
+
+                if (this.x <= 0 || this.x >= canvas.width) this.vx *= -1;
+                if (this.y <= 0 || this.y >= canvas.height) this.vy *= -1;
+
+                this.x = Math.max(0, Math.min(canvas.width, this.x));
+                this.y = Math.max(0, Math.min(canvas.height, this.y));
+            }
+
+            draw()
+            {
+                // 使用SVG图像绘制动物
+                const img = this.isMarked ? imgMarked : imgUnmarked;
+                const size = this.size * 2; // 调整图像大小
+
+                if (imagesLoaded === 2)
+                {
+                    // 绘制SVG图像
+                    ctx.drawImage(img, this.x - size / 2, this.y - size / 2, size, size);
+                } else
+                {
+                    // 备用：如果图像未加载完成，使用圆形绘制
                     ctx.beginPath();
-                    ctx.arc(this.x, this.y, this.size * 0.4, 0, Math.PI * 2);
-                    ctx.fillStyle = '#d32f2f';
-                    ctx.fill();
-                } else {
-                    ctx.fillStyle = '#424242';
-                    ctx.fill();
+                    ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+
+                    if (this.isMarked)
+                    {
+                        ctx.fillStyle = '#424242';
+                        ctx.fill();
+
+                        ctx.beginPath();
+                        ctx.arc(this.x, this.y, this.size * 0.4, 0, Math.PI * 2);
+                        ctx.fillStyle = '#d32f2f';
+                        ctx.fill();
+                    } else
+                    {
+                        ctx.fillStyle = '#424242';
+                        ctx.fill();
+                    }
+                }
+
+                // 如果被困住，加个光圈
+                if (this.isTrapped)
+                {
+                    ctx.beginPath();
+                    ctx.arc(this.x, this.y, this.size + 3, 0, Math.PI * 2);
+                    ctx.strokeStyle = '#FFD700';
+                    ctx.lineWidth = 2;
+                    ctx.stroke();
                 }
             }
-            
-            // 如果被困住，加个光圈
-            if (this.isTrapped) {
-                ctx.beginPath();
-                ctx.arc(this.x, this.y, this.size + 3, 0, Math.PI * 2);
-                ctx.strokeStyle = '#FFD700';
-                ctx.lineWidth = 2;
-                ctx.stroke();
+
+            // 重置位置和方向
+            resetPosition()
+            {
+                this.x = Math.random() * (canvas.width - 10);
+                this.y = Math.random() * (canvas.height - 10);
+                const angle = Math.random() * Math.PI * 2;
+                this.vx = Math.cos(angle);
+                this.vy = Math.sin(angle);
             }
         }
-        
-        // 重置位置和方向
-        resetPosition() {
-            this.x = Math.random() * (canvas.width - 10);
-            this.y = Math.random() * (canvas.height - 10);
-            const angle = Math.random() * Math.PI * 2;
-            this.vx = Math.cos(angle);
-            this.vy = Math.sin(angle);
+
+        // --- 绘图循环 ---
+        function draw()
+        {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // 绘制动物
+            animals.filter(a => !a.isTrapped).forEach(a => a.draw());
+            animals.filter(a => a.isTrapped).forEach(a => a.draw());
+
+            // 更新物理
+            animals.forEach(a => a.update());
         }
-    }
 
-    // --- 绘图循环 ---
-    function draw() {
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        function loop()
+        {
+            draw();
+            animationId = requestAnimationFrame(loop);
+        }
 
-        // 绘制动物
-        animals.filter(a => !a.isTrapped).forEach(a => a.draw());
-        animals.filter(a => a.isTrapped).forEach(a => a.draw());
+        // --- 业务逻辑 ---
 
-        // 更新物理
-        animals.forEach(a => a.update());
-    }
+        function resetExperiment()
+        {
+            // 读取输入框的值（此时输入框的值可能已经被URL参数覆盖）
+            N_real = parseInt(document.getElementById('setting-count').value) || 200;
+            speedMultiplier = parseFloat(document.getElementById('setting-speed').value) || 3;
+            animalSize = parseInt(document.getElementById('setting-size').value) || 4;
+            captureLimit1 = parseInt(document.getElementById('setting-limit1').value) || 30;
+            captureLimit2 = parseInt(document.getElementById('setting-limit2').value) || 40;
 
-    function loop() {
-        draw();
-        animationId = requestAnimationFrame(loop);
-    }
+            animals = [];
+            for (let i = 0; i < N_real; i++) animals.push(new Animal());
 
-    // --- 业务逻辑 ---
+            M = 0; n = 0; m = 0; N_est = 0;
 
-    function resetExperiment() {
-        N_real = parseInt(document.getElementById('setting-count').value) || 200;
-        speedMultiplier = parseFloat(document.getElementById('setting-speed').value) || 3;
-        animalSize = parseInt(document.getElementById('setting-size').value) || 4;
-        captureLimit1 = parseInt(document.getElementById('setting-limit1').value) || 30;
-        captureLimit2 = parseInt(document.getElementById('setting-limit2').value) || 40;
+            document.getElementById('log-content').innerHTML = '';
+            log(`实验重置。总数: ${N_real}`, 'info');
+            updateStatus("请点击'开始第一次捕获'按钮");
+            updateTooltip("准备就绪");
 
-        animals = [];
-        for (let i = 0; i < N_real; i++) animals.push(new Animal());
-        
-        M = 0; n = 0; m = 0; N_est = 0;
-        
-        document.getElementById('log-content').innerHTML = '';
-        log(`实验重置。总数: ${N_real}`, 'info');
-        updateStatus("请点击'开始第一次捕获'按钮");
-        updateTooltip("准备就绪");
-        
-        disableAllButtons();
-        currentState = 'READY_1';
-        enableButton('btn-start-1');
-        
-        updateButtonCount('count-1', 0, captureLimit1);
-        updateButtonCount('count-2', 0, captureLimit2);
+            disableAllButtons();
+            currentState = 'READY_1';
+            enableButton('btn-start-1');
 
-        if (animationId) cancelAnimationFrame(animationId);
-        loop();
-    }
+            updateButtonCount('count-1', 0, captureLimit1);
+            updateButtonCount('count-2', 0, captureLimit2);
 
-    function startCapture1() {
-        currentState = 'CAPTURING_1';
-        disableAllButtons();
-        
-        log(">>> 第一次捕获开始 (请点击动物进行捕捉)", 'info');
-        updateStatus(`第一次捕获中 (目标: ${captureLimit1}只)`);
-        updateTooltip("点击动物进行捕捉");
-    }
+            if (animationId) cancelAnimationFrame(animationId);
+            loop();
+        }
 
-    function endCapture1() {
-        M = animals.filter(a => a.isTrapped).length;
-        currentState = 'MARKED';
-        
-        log(`第一次捕获结束。捕获数量 M = ${M}`, 'success');
-        updateStatus(`第一次捕获完成 (${M}只)，请点击标记`);
-        updateTooltip("请点击'标记并释放'");
-        enableButton('btn-mark');
-    }
+        function startCapture1()
+        {
+            currentState = 'CAPTURING_1';
+            disableAllButtons();
 
-    function markAndRelease() {
-        let count = 0;
-        animals.forEach(a => {
-            if (a.isTrapped) {
-                a.isMarked = true;
-                a.isTrapped = false;
-                count++;
-            }
-        });
-        
-        // 重置所有动物的位置，打乱分布
-        animals.forEach(a => a.resetPosition());
-        
-        currentState = 'READY_2';
-        log(`已标记 ${count} 只动物并释放。`, 'info');
-        updateStatus("已释放。请开始第二次捕获");
-        updateTooltip("请点击'开始第二次捕获'");
-        disableAllButtons();
-        enableButton('btn-start-2');
-    }
+            log(">>> 第一次捕获开始 (请点击动物进行捕捉)", 'info');
+            updateStatus(`第一次捕获中 (目标: ${captureLimit1}只)`);
+            updateTooltip("点击动物进行捕捉");
+        }
 
-    function startCapture2() {
-        currentState = 'CAPTURING_2';
-        disableAllButtons();
-        
-        log(">>> 第二次捕获开始 (请点击动物进行捕捉)", 'info');
-        updateStatus(`第二次捕获中 (目标: ${captureLimit2}只)`);
-        updateTooltip("点击动物进行捕捉");
-    }
+        function endCapture1()
+        {
+            M = animals.filter(a => a.isTrapped).length;
+            currentState = 'MARKED';
 
-    function endCapture2() {
-        const trapped = animals.filter(a => a.isTrapped);
-        n = trapped.length;
-        m = trapped.filter(a => a.isMarked).length;
+            log(`第一次捕获结束。捕获数量 M = ${M}`, 'success');
+            updateStatus(`第一次捕获完成 (${M}只)，请点击标记`);
+            updateTooltip("请点击'标记并释放'");
+            enableButton('btn-mark');
+        }
 
-        currentState = 'FINISHED';
-        
-        log(`第二次捕获结束。总数 n = ${n}, 标记数 m = ${m}`, 'success');
-        updateStatus("第二次捕获完成，请点击计算结果");
-        updateTooltip("请点击'计算结果'");
-        enableButton('btn-calculate');
-    }
+        function markAndRelease()
+        {
+            let count = 0;
+            animals.forEach(a =>
+            {
+                if (a.isTrapped)
+                {
+                    a.isMarked = true;
+                    a.isTrapped = false;
+                    count++;
+                }
+            });
 
-    function calculateResult() {
-        if (m === 0) {
-            log("失败：第二次未捕获到标记个体 (m=0)，无法计算。", 'warn');
-        } else {
-            N_est = Math.round((M * n) / m);
-            const err = ((Math.abs(N_est-N_real)/N_real)*100).toFixed(2);
-            
-            const div = document.getElementById('log-content');
-            div.innerHTML += `
+            // 重置所有动物的位置，打乱分布
+            animals.forEach(a => a.resetPosition());
+
+            currentState = 'READY_2';
+            log(`已标记 ${count} 只动物并释放。`, 'info');
+            updateStatus("已释放。请开始第二次捕获");
+            updateTooltip("请点击'开始第二次捕获'");
+            disableAllButtons();
+            enableButton('btn-start-2');
+        }
+
+        function startCapture2()
+        {
+            currentState = 'CAPTURING_2';
+            disableAllButtons();
+
+            log(">>> 第二次捕获开始 (请点击动物进行捕捉)", 'info');
+            updateStatus(`第二次捕获中 (目标: ${captureLimit2}只)`);
+            updateTooltip("点击动物进行捕捉");
+        }
+
+        function endCapture2()
+        {
+            const trapped = animals.filter(a => a.isTrapped);
+            n = trapped.length;
+            m = trapped.filter(a => a.isMarked).length;
+
+            currentState = 'FINISHED';
+
+            log(`第二次捕获结束。总数 n = ${n}, 标记数 m = ${m}`, 'success');
+            updateStatus("第二次捕获完成，请点击计算结果");
+            updateTooltip("请点击'计算结果'");
+            enableButton('btn-calculate');
+        }
+
+        function calculateResult()
+        {
+            if (m === 0)
+            {
+                log("失败：第二次未捕获到标记个体 (m=0)，无法计算。", 'warn');
+            } else
+            {
+                N_est = Math.round((M * n) / m);
+                const err = ((Math.abs(N_est - N_real) / N_real) * 100).toFixed(2);
+
+                const div = document.getElementById('log-content');
+                div.innerHTML += `
                 <div class="log-result">
                     <div>结果分析:</div>
                     <div>N = (M × n) / m = (${M} × ${n}) / ${m}</div>
@@ -593,43 +743,53 @@
                     <div style="font-weight:normal; color:#555;">真实值: ${N_real} (误差: ${err}%)</div>
                 </div>
             `;
-            div.scrollTop = div.scrollHeight;
-            
-            updateStatus("实验完成，查看左侧结果");
-            updateTooltip("实验完成");
-            
+                div.scrollTop = div.scrollHeight;
+
+                updateStatus("实验完成，查看左侧结果");
+                updateTooltip("实验完成");
+
+            }
         }
-    }
 
-    // --- 工具 ---
-    function log(msg, type='normal') {
-        const div = document.getElementById('log-content');
-        const d = document.createElement('div');
-        d.className = 'log-entry ' + (type === 'info' ? 'log-info' : type === 'success' ? 'log-success' : type === 'warn' ? 'log-warn' : '');
-        d.innerText = `[${new Date().toLocaleTimeString().slice(3)}] ${msg}`;
-        div.appendChild(d);
-        div.scrollTop = div.scrollHeight;
-    }
+        // --- 工具 ---
+        function log(msg, type = 'normal')
+        {
+            const div = document.getElementById('log-content');
+            const d = document.createElement('div');
+            d.className = 'log-entry ' + (type === 'info' ? 'log-info' : type === 'success' ? 'log-success' : type === 'warn' ? 'log-warn' : '');
+            d.innerText = `[${new Date().toLocaleTimeString().slice(3)}] ${msg}`;
+            div.appendChild(d);
+            div.scrollTop = div.scrollHeight;
+        }
 
-    function updateStatus(txt) { document.getElementById('status-text').innerText = txt; }
-    function updateTooltip(txt) { document.getElementById('canvas-tooltip').innerText = txt; }
-    function enableButton(id) { document.getElementById(id).disabled = false; }
-    function disableAllButtons() {
-        ['btn-start-1', 'btn-mark', 'btn-start-2', 'btn-calculate'].forEach(id => document.getElementById(id).disabled = true);
-    }
-    
-    function updateButtonCount(id, current, limit) {
-        document.getElementById(id).innerText = `${current}/${limit}`;
-    }
+        function updateStatus(txt) { document.getElementById('status-text').innerText = txt; }
+        function updateTooltip(txt) { document.getElementById('canvas-tooltip').innerText = txt; }
+        function enableButton(id) { document.getElementById(id).disabled = false; }
+        function disableAllButtons()
+        {
+            ['btn-start-1', 'btn-mark', 'btn-start-2', 'btn-calculate'].forEach(id => document.getElementById(id).disabled = true);
+        }
 
-    // 初始化
-    loadImages().then(() => {
-        console.log('SVG images loaded successfully');
-        resetExperiment();
-    }).catch(err => {
-        console.error('Failed to load SVG images:', err);
-        resetExperiment();
-    });
-</script>
+        function updateButtonCount(id, current, limit)
+        {
+            document.getElementById(id).innerText = `${current}/${limit}`;
+        }
+
+        // --- 启动流程 ---
+        // 1. 优先读取并应用 URL 参数配置
+        applyUrlSettings();
+
+        // 2. 加载资源并开始
+        loadImages().then(() =>
+        {
+            console.log('SVG images loaded successfully');
+            resetExperiment();
+        }).catch(err =>
+        {
+            console.error('Failed to load SVG images:', err);
+            resetExperiment();
+        });
+    </script>
 </body>
+
 </html>
