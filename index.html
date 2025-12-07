@@ -296,7 +296,7 @@
             } else if (data === 'invalid') {
                 msg.innerText = "激活码无效";
             } else if (data === 'used') {
-                msg。innerText = "该激活码已被使用";
+                msg.innerText = "该激活码已被使用";
             }
         }
 
@@ -318,7 +318,7 @@
                     alert("检测到账号在异地登录，本设备已下线。");
                     await handleLogout();
                 }
-            }， 10000); // 每10秒检查一次
+            }, 10000); // 每10秒检查一次
         }
 
         // ==========================================
@@ -326,18 +326,18 @@
         // ==========================================
         
         function switchView(viewName) {
-            ['login-view'， 'register-view'， 'forgot-view'， 'update-pwd-view']。forEach(id => {
+            ['login-view', 'register-view', 'forgot-view', 'update-pwd-view'].forEach(id => {
                 document.getElementById(id).classList.add('hidden');
             });
             document.getElementById(viewName + '-view').classList.remove('hidden');
         }
         
         function showView(viewId) {
-            document。getElementById('auth-container')。classList。remove('hidden');
-            switchView(viewId。replace('-view'， '')); // 简单处理
+            document.getElementById('auth-container').classList.remove('hidden');
+            switchView(viewId.replace('-view', '')); // 简单处理
             if(viewId === 'update-pwd-view') {
-                 ['login-view'， 'register-view'， 'forgot-view']。forEach(id => document.getElementById(id)。classList.add('hidden'));
-                 document。getElementById('update-pwd-view')。classList。remove('hidden');
+                 ['login-view', 'register-view', 'forgot-view'].forEach(id => document.getElementById(id).classList.add('hidden'));
+                 document.getElementById('update-pwd-view').classList.remove('hidden');
             }
         }
 
@@ -349,11 +349,11 @@
                 { name: "样方法", url: "./SamplingMethod/index.html" }
             ];
             
-            list。innerHTML = experiments。map(exp => `
-                <a href="${exp。url}" class="exp-card">
-                    ${exp。name}
+            list.innerHTML = experiments.map(exp => `
+                <a href="${exp.url}" class="exp-card">
+                    ${exp.name}
                 </a>
-            `)。join('');
+            `).join('');
         }
     </script>
 </body>

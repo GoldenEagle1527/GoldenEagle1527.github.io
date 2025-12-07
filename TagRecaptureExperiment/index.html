@@ -1,5 +1,49 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
+    <!-- 实验页面专用门卫代码 -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script>
+        // 1. 初始化 (填入同样的 URL 和 Key)
+        const _SUPABASE_URL = 'https://psvxbzkuqdpgzgmthdte.supabase.co';
+        const _SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBzdnhiemt1cWRwZ3pnbXRoZHRlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjUwNTI1ODEsImV4cCI6MjA4MDYyODU4MX0.Oyso8hOwbfCs7QlRGwW9LEbBhLTSM-Vhn_-7RAUa418';
+        const _supabase = window.supabase.createClient(_SUPABASE_URL, _SUPABASE_KEY);
+
+        // 2. 立即执行检查
+        (async function checkAccess()
+        {
+            // A. 检查是否登录
+            const { data: { session } } = await _supabase.auth.getSession();
+            if (!session)
+            {
+                alert("未登录，请先登录！");
+                window.location.href = "../index.html"; // 跳回上级主页
+                return;
+            }
+
+            // B. 检查是否 VIP (防绕过)
+            const { data: profile } = await _supabase
+                .from('profiles')
+                .select('is_vip, active_token')
+                .eq('id', session.user.id)
+                .single();
+
+            if (!profile || !profile.is_vip)
+            {
+                alert("您尚未激活付费，无法进入实验！");
+                window.location.href = "../index.html";
+                return;
+            }
+
+            // C. 互踢检查 (可选，为了严谨)
+            const localToken = localStorage.getItem('bio_session_token');
+            if (profile.active_token && profile.active_token !== localToken)
+            {
+                alert("账号在别处登录，您已被踢下线。");
+                await _supabase.auth.signOut();
+                window.location.href = "../index.html";
+            }
+        })();
+    </script>
 <head>
     <meta charset="UTF-8">
     <!-- 视口设置，确保移动端缩放正常 -->
