@@ -1,199 +1,360 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
-    <script>
-    // 逻辑：如果当前浏览器地址栏显示的不是我的自定义域名
-    // 强制跳转到自定义域名（那里有 Cloudflare 的密码锁）
-    const myDomain = "572003.xyz"; // 替换为你的真实域名
-    
-    // 本地开发环境(localhost)不跳转，方便调试
-    if (location.hostname !== "localhost" && location.hostname !== "127.0.0.1") {
-        if (location.hostname !== myDomain) {
-            window.location.href = "https://" + myDomain + location.pathname + location.search;
-        }
-    }
-</script>
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="icon" type="image/svg+xml" href="./Icon.svg">
     <title>生物实验模拟系统</title>
+    <!-- 引入 Supabase SDK -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
-        /* =========================================
-           CSS 变量定义 (配色方案)
-           逻辑：通过变量管理颜色，便于统一修改和实现深色模式
-           ========================================= */
-        :root {
-            /* 浅色模式 (默认) */
-            --bg-color: #f5f7fa;
-            --text-primary: #1f2937;
-            --text-secondary: #6b7280;
-            --card-bg: #ffffff;
-            --card-border: #e5e7eb;
-            --card-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-            --card-hover-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
-            --accent-color: #2563eb; /* 科技蓝 */
-            --accent-hover: #1d4ed8;
-            --footer-text: #9ca3af;
-        }
-
-        /* 深色模式适配 */
-        @media (prefers-color-scheme: dark) {
-            :root {
-                --bg-color: #111827;
-                --text-primary: #f3f4f6;
-                --text-secondary: #9ca3af;
-                --card-bg: #1f2937;
-                --card-border: #374151;
-                --card-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.5);
-                --card-hover-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.5);
-                --accent-color: #60a5fa; /* 较亮的蓝色以适应深底 */
-                --accent-hover: #93c5fd;
-                --footer-text: #6b7280;
-            }
-        }
-
-        /* =========================================
-           全局重置与基础样式
-           ========================================= */
-        * {
-            box-sizing: border-box;
-            transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
-        }
-
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", "Microsoft YaHei", sans-serif;
-            background-color: var(--bg-color);
-            color: var(--text-primary);
-            margin: 0;
-            padding: 0;
-            min-height: 100vh;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-        }
-
-        /* =========================================
-           布局组件
-           ========================================= */
+        :root { --primary: #2563eb; --bg: #f3f4f6; --card: #ffffff; --text: #1f2937; }
+        body { font-family: sans-serif; background: var(--bg); color: var(--text); display: flex; flex-direction: column; align-items: center; min-height: 100vh; margin: 0; }
         
-        /* 头部样式 */
-        header {
-            width: 100%;
-            padding: 60px 20px 40px;
-            text-align: center;
-        }
+        /* 容器样式 */
+        .container { width: 100%; max-width: 400px; padding: 20px; margin-top: 60px; }
+        .card { background: var(--card); padding: 30px; border-radius: 12px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); text-align: center; }
+        
+        /* 控件样式 */
+        h2 { margin-top: 0; color: var(--primary); }
+        input { width: 100%; padding: 12px; margin: 10px 0; border: 1px solid #e5e7eb; border-radius: 6px; box-sizing: border-box; }
+        button { width: 100%; padding: 12px; background: var(--primary); color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; margin-top: 10px; }
+        button:hover { opacity: 0.9; }
+        button.secondary { background: #9ca3af; margin-top: 5px; }
+        .link-text { color: var(--primary); font-size: 0.9rem; cursor: pointer; margin-top: 15px; display: inline-block; text-decoration: underline; }
+        
+        /* 实验列表样式 */
+        .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 20px; width: 100%; max-width: 800px; margin-top: 40px; }
+        .exp-card { background: white; padding: 30px; border-radius: 12px; text-align: center; box-shadow: 0 4px 6px rgba(0,0,0,0.05); text-decoration: none; color: inherit; font-weight: bold; font-size: 1.2rem; transition: transform 0.2s; border: 1px solid #e5e7eb; display: block; }
+        .exp-card:hover { transform: translateY(-5px); border-color: var(--primary); color: var(--primary); }
 
-        h1 {
-            font-size: 2rem;
-            font-weight: 700;
-            color: var(--text-primary);
-            margin: 0;
-            letter-spacing: 1px;
-            position: relative;
-            display: inline-block;
-        }
-
-        /* 标题下方的装饰线 */
-        h1::after {
-            content: '';
-            display: block;
-            width: 60px;
-            height: 4px;
-            background-color: var(--accent-color);
-            margin: 15px auto 0;
-            border-radius: 2px;
-        }
-
-        /* 核心网格容器 (替代原有的 table) */
-        .grid-container {
-            width: 100%;
-            max-width: 1200px; /* 限制最大宽度 */
-            padding: 20px;
-            display: grid;
-            /* 逻辑：自动填充列，每列最小240px，最大1fr。这实现了自动响应式，无需特定的移动端媒体查询 */
-            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-            gap: 25px;
-            justify-content: center;
-        }
-
-        /* =========================================
-           卡片样式 (替代原有的 td)
-           ========================================= */
-        .card {
-            background-color: var(--card-bg);
-            border: 1px solid var(--card-border);
-            border-radius: 12px;
-            box-shadow: var(--card-shadow);
-            overflow: hidden;
-            display: flex;
-            flex-direction: column;
-            transform: translateY(0);
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-        }
-
-        .card:hover {
-            transform: translateY(-5px);
-            box-shadow: var(--card-hover-shadow);
-            border-color: var(--accent-color);
-        }
-
-        /* 按钮连接样式 */
-        a.exp-link {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            width: 100%;
-            height: 100%;
-            min-height: 120px; /* 增加点击区域高度 */
-            text-decoration: none;
-            color: var(--text-primary);
-            font-weight: 600;
-            font-size: 1.1rem;
-            padding: 24px;
-            text-align: center;
-            line-height: 1.5;
-        }
-
-        a.exp-link:hover {
-            color: var(--accent-color);
-        }
-
-        /* =========================================
-           底部样式
-           ========================================= */
-        footer {
-            margin-top: auto;
-            padding: 40px 20px;
-            font-size: 0.875rem;
-            color: var(--footer-text);
-            text-align: center;
-            border-top: 1px solid var(--card-border);
-            width: 100%;
-        }
-
+        /* 状态切换 */
+        .hidden { display: none !important; }
+        .error-msg { color: #dc2626; font-size: 0.9rem; margin-top: 10px; }
+        .success-msg { color: #16a34a; font-size: 0.9rem; margin-top: 10px; }
     </style>
 </head>
 <body>
 
-    <header>
-        <h1>生物实验模拟系统</h1>
-    </header>
-    
-    <main class="grid-container">
+    <!-- 1. 认证模块 (登录/注册/找回密码) -->
+    <div id="auth-container" class="container">
         
-        <div class="card">
-            <a href="./TagRecaptureExperiment/index.html" class="exp-link">标记重捕法</a>
+        <!-- 登录表单 -->
+        <div id="login-view" class="card">
+            <h2>登录系统</h2>
+            <input type="email" id="email" placeholder="邮箱地址">
+            <input type="password" id="password" placeholder="密码">
+            <button onclick="handleLogin()">登录</button>
+            <div style="margin-top: 15px; font-size: 0.9rem;">
+                <span class="link-text" onclick="switchView('register')">注册新账号</span> | 
+                <span class="link-text" onclick="switchView('forgot')">忘记密码?</span>
+            </div>
+            <p id="login-msg" class="error-msg"></p>
         </div>
+
+        <!-- 注册表单 -->
+        <div id="register-view" class="card hidden">
+            <h2>注册账号</h2>
+            <input type="email" id="reg-email" placeholder="输入邮箱">
+            <input type="password" id="reg-password" placeholder="设置密码">
+            <button onclick="handleRegister()">注册</button>
+            <br>
+            <span class="link-text" onclick="switchView('login')">返回登录</span>
+            <p id="reg-msg" class="error-msg"></p>
+        </div>
+
+        <!-- 忘记密码表单 -->
+        <div id="forgot-view" class="card hidden">
+            <h2>重置密码</h2>
+            <p style="font-size:0.9rem; color:#666;">输入您的注册邮箱，我们将发送重置链接。</p>
+            <input type="email" id="forgot-email" placeholder="您的邮箱">
+            <button onclick="handleResetPwd()">发送邮件</button>
+            <br>
+            <span class="link-text" onclick="switchView('login')">返回登录</span>
+            <p id="forgot-msg" class="error-msg"></p>
+        </div>
+
+        <!-- 设置新密码 (从邮件跳转回来时显示) -->
+        <div id="update-pwd-view" class="card hidden">
+            <h2>设置新密码</h2>
+            <input type="password" id="new-password" placeholder="输入新密码">
+            <button onclick="handleUpdatePwd()">确认修改</button>
+            <p id="update-msg" class="error-msg"></p>
+        </div>
+    </div>
+
+    <!-- 2. 激活模块 (登录了但未付费) -->
+    <div id="activation-container" class="container hidden">
+        <div class="card">
+            <h2>账户激活</h2>
+            <p>欢迎，<span id="user-display"></span></p>
+            <p style="color:#666; font-size:0.9rem;">本系统为付费资源，请输入激活码解锁。</p>
+            <input type="text" id="license-key" placeholder="输入激活码 (例如 BIO-XXXX)">
+            <button onclick="handleActivation()">立即激活</button>
+            <button class="secondary" onclick="handleLogout()">退出登录</button>
+            <p id="act-msg" class="error-msg"></p>
+        </div>
+    </div>
+
+    <!-- 3. 主界面 (已登录且已激活) -->
+    <div id="main-container" class="hidden" style="width: 100%; display: flex; flex-direction: column; align-items: center;">
+        <header style="margin-top: 40px; text-align: center;">
+            <h1>生物实验模拟系统</h1>
+            <p style="color: #666;">当前用户: <span id="vip-user"></span> <span class="link-text" onclick="handleLogout()" style="margin-left:10px;">[退出]</span></p>
+        </header>
+
+        <main class="grid" id="experiment-list">
+            <!-- 实验链接由 JS 动态注入 -->
+        </main>
         
-        <div class="card">
-            <a href="./SamplingMethod/index.html" class="exp-link">样方法</a>
-        </div>
+        <footer style="margin-top: 50px; color: #999; font-size: 0.8rem;">
+            &copy; 2025 生物实验系统
+        </footer>
+    </div>
 
-    </main>
+    <script>
+        // ==========================================
+        // 配置区域 (请替换为你的 Supabase 项目信息)
+        // ==========================================
+        const SUPABASE_URL = 'https://psvxbzkuqdpgzgmthdte.supabase.co';
+        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBzdnhiemt1cWRwZ3pnbXRoZHRlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjUwNTI1ODEsImV4cCI6MjA4MDYyODU4MX0.Oyso8hOwbfCs7QlRGwW9LEbBhLTSM-Vhn_-7RAUa418';
+        
+        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-    <footer>
-        &copy; 2025 生物实验 | 系统版本 1.1 | GoldenEaglePersonal
-    </footer>
+        // ==========================================
+        // 核心逻辑
+        // ==========================================
 
+        // 页面加载时初始化
+        window.addEventListener('load', async () => {
+            // 检查是否是密码重置链接跳转回来的
+            supabase.auth.onAuthStateChange(async (event, session) => {
+                if (event === 'PASSWORD_RECOVERY') {
+                    showView('update-pwd-view');
+                } else if (event === 'SIGNED_IN') {
+                    checkUserStatus();
+                } else if (event === 'SIGNED_OUT') {
+                    showView('login-view');
+                    document.getElementById('auth-container').classList.remove('hidden');
+                    document.getElementById('activation-container').classList.add('hidden');
+                    document.getElementById('main-container').classList.add('hidden');
+                }
+            });
+            
+            // 初始检查
+            const { data: { session } } = await supabase.auth.getSession();
+            if (!session) {
+                showView('login-view');
+            }
+        });
+
+        // 检查用户状态 (VIP与互踢)
+        async function checkUserStatus() {
+            const { data: { user } } = await supabase.auth.getUser();
+            if (!user) return;
+
+            // 1. 获取 Profile 数据
+            const { data: profile } = await supabase
+                .from('profiles')
+                .select('is_vip, active_token')
+                .eq('id', user.id)
+                .single();
+
+            // 2. 互踢检测 (Anti-Sharing)
+            const localToken = localStorage.getItem('bio_session_token');
+            // 如果数据库有令牌，且与本地不一致，说明被挤下线了
+            if (profile.active_token && profile.active_token !== localToken) {
+                await supabase.auth.signOut();
+                alert("您的账号已在其他设备登录，您已被强制下线。");
+                return;
+            }
+
+            // 3. UI 路由
+            document.getElementById('auth-container').classList.add('hidden');
+            
+            if (profile.is_vip) {
+                // 已激活：进入主页
+                document.getElementById('activation-container').classList.add('hidden');
+                document.getElementById('main-container').classList.remove('hidden');
+                document.getElementById('vip-user').innerText = user.email;
+                renderExperiments(); // 渲染实验链接
+                startHeartbeat(user.id); // 开启心跳检测
+            } else {
+                // 未激活：进入激活页
+                document.getElementById('main-container').classList.add('hidden');
+                document.getElementById('activation-container').classList.remove('hidden');
+                document.getElementById('user-display').innerText = user.email;
+                
+                // 确保本地有令牌 (为了防止新注册用户没有令牌)
+                if (!localToken) updateSessionToken(user.id);
+            }
+        }
+
+        // ==========================================
+        // 认证功能函数
+        // ==========================================
+
+        // 注册
+        async function handleRegister() {
+            const email = document.getElementById('reg-email').value;
+            const password = document.getElementById('reg-password').value;
+            const msg = document.getElementById('reg-msg');
+            
+            if(!email || !password) return msg.innerText = "请填写完整";
+            msg.innerText = "处理中...";
+
+            const { data, error } = await supabase.auth.signUp({ email, password });
+            if (error) {
+                msg.innerText = error.message;
+            } else {
+                msg.className = "success-msg";
+                msg.innerText = "注册成功！请检查邮箱并点击确认链接。";
+            }
+        }
+
+        // 登录
+        async function handleLogin() {
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            const msg = document.getElementById('login-msg');
+
+            msg.innerText = "";
+            const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+            
+            if (error) {
+                msg.innerText = "登录失败: " + error.message;
+            } else {
+                // 登录成功，生成新令牌，踢掉旧设备
+                await updateSessionToken(data.user.id);
+                // checkUserStatus 会由 onAuthStateChange 自动触发
+            }
+        }
+
+        // 发送重置密码邮件
+        async function handleResetPwd() {
+            const email = document.getElementById('forgot-email').value;
+            const msg = document.getElementById('forgot-msg');
+            
+            if (!email) return msg.innerText = "请输入邮箱";
+            
+            // 注意：这里需要配置 redirectTo 指向你的当前页面
+            const { data, error } = await supabase.auth.resetPasswordForEmail(email, {
+                redirectTo: window.location.href,
+            });
+            
+            if (error) {
+                msg.innerText = error.message;
+            } else {
+                msg.className = "success-msg";
+                msg.innerText = "重置链接已发送，请检查邮箱 (可能在垃圾箱)。";
+            }
+        }
+
+        // 设置新密码
+        async function handleUpdatePwd() {
+            const newPassword = document.getElementById('new-password').value;
+            const msg = document.getElementById('update-msg');
+            
+            if (!newPassword) return msg.innerText = "请输入新密码";
+            
+            const { data, error } = await supabase.auth.updateUser({ password: newPassword });
+            
+            if (error) {
+                msg.innerText = error.message;
+            } else {
+                alert("密码修改成功，请重新登录");
+                await supabase.auth.signOut();
+                window.location.href = window.location.origin + window.location.pathname; // 去除 URL hash
+            }
+        }
+
+        // 退出登录
+        async function handleLogout() {
+            await supabase.auth.signOut();
+            localStorage.removeItem('bio_session_token');
+        }
+
+        // ==========================================
+        // 激活与会话管理
+        // ==========================================
+
+        // 激活账号
+        async function handleActivation() {
+            const key = document.getElementById('license-key').value.trim();
+            const msg = document.getElementById('act-msg');
+            if (!key) return msg.innerText = "请输入激活码";
+
+            msg.innerText = "验证中...";
+            
+            // 调用数据库 RPC 函数
+            const { data, error } = await supabase.rpc('redeem_license', { input_key: key });
+
+            if (error) {
+                msg.innerText = "系统错误: " + error.message;
+            } else if (data === 'success') {
+                alert("激活成功！");
+                location.reload();
+            } else if (data === 'invalid') {
+                msg.innerText = "激活码无效";
+            } else if (data === 'used') {
+                msg。innerText = "该激活码已被使用";
+            }
+        }
+
+        // 更新会话令牌 (互踢核心)
+        async function updateSessionToken(userId) {
+            const newToken = Math.random().toString(36).substring(2) + Date.now().toString(36);
+            localStorage.setItem('bio_session_token', newToken);
+            
+            await supabase.from('profiles').update({ active_token: newToken }).eq('id', userId);
+        }
+
+        // 心跳检测 (防止登录后在此期间有人在别处登录)
+        function startHeartbeat(userId) {
+            setInterval(async () => {
+                const localToken = localStorage.getItem('bio_session_token');
+                const { data } = await supabase.from('profiles').select('active_token').eq('id', userId).single();
+                
+                if (data && data.active_token !== localToken) {
+                    alert("检测到账号在异地登录，本设备已下线。");
+                    await handleLogout();
+                }
+            }， 10000); // 每10秒检查一次
+        }
+
+        // ==========================================
+        // 界面辅助
+        // ==========================================
+        
+        function switchView(viewName) {
+            ['login-view'， 'register-view'， 'forgot-view'， 'update-pwd-view']。forEach(id => {
+                document.getElementById(id).classList.add('hidden');
+            });
+            document.getElementById(viewName + '-view').classList.remove('hidden');
+        }
+        
+        function showView(viewId) {
+            document。getElementById('auth-container')。classList。remove('hidden');
+            switchView(viewId。replace('-view'， '')); // 简单处理
+            if(viewId === 'update-pwd-view') {
+                 ['login-view'， 'register-view'， 'forgot-view']。forEach(id => document.getElementById(id)。classList.add('hidden'));
+                 document。getElementById('update-pwd-view')。classList。remove('hidden');
+            }
+        }
+
+        function renderExperiments() {
+            const list = document.getElementById('experiment-list');
+            // 这里定义你的实验链接
+            const experiments = [
+                { name: "标记重捕法", url: "./TagRecaptureExperiment/index.html" },
+                { name: "样方法", url: "./SamplingMethod/index.html" }
+            ];
+            
+            list。innerHTML = experiments。map(exp => `
+                <a href="${exp。url}" class="exp-card">
+                    ${exp。name}
+                </a>
+            `)。join('');
+        }
+    </script>
 </body>
 </html>
