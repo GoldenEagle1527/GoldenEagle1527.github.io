@@ -139,58 +139,76 @@
                 }
             });
             
-             // 初始检查
+             // 检查URL中是否包含密码恢复的标识
+            const isPasswordRecovery = window.location.hash.includes('type=recovery');
+
+            // 初始检查
             const { data: { session } } = await supabase.auth.getSession();
-            if (session)
-            { // 如果已经有会话，则直接检查状态
+
+            // 只有在存在会话且不处于密码恢复流程时，才进行状态检查
+            if (session && !isPasswordRecovery)
+            {
                 checkUserStatus();
-            } else
+            }
+            // 如果没有会话，并且也不是密码恢复流程，才显示登录界面
+            else if (!session && !isPasswordRecovery)
             {
                 showView('login-view');
             }
+            // 如果是密码恢复流程，则什么都不做，等待 onAuthStateChange 来处理
         });
         // 检查用户状态 (VIP与互踢)
-        async function checkUserStatus() {
-            const { data: { user } } = await supabase.auth.getUser();
-            if (!user) return;
+        // 在函数定义处添加 isPostLogin = false 参数
+            async function checkUserStatus(isPostLogin = false)
+            {
+                const { data: { user } } = await supabase.auth.getUser();
+                if (!user) return;
 
-            // 1. 获取 Profile 数据
-            const { data: profile } = await supabase
-                .from('profiles')
-                .select('is_vip, active_token')
-                .eq('id', user.id)
-                .single();
+                // 1. 获取 Profile 数据
+                const { data: profile } = await supabase
+                    .from('profiles')
+                    .select('is_vip, active_token')
+                    .eq('id', user.id)
+                    .single();
 
-            // 2. 互踢检测 (Anti-Sharing)
-            const localToken = localStorage.getItem('bio_session_token');
-            // 如果数据库有令牌，且与本地不一致，说明被挤下线了
-            if (profile.active_token && profile.active_token !== localToken) {
-                await supabase.auth.signOut();
-                alert("您的账号已在其他设备登录，您已被强制下线。");
-                return;
+                // 2. 互踢检测 (Anti-Sharing)
+                // --- 用 if 包裹以下逻辑 ---
+                if (!isPostLogin)
+                { // 只有在不是“登录后立即检查”的情况下，才执行互踢检查
+                    const localToken = localStorage.getItem('bio_session_token');
+                    // 如果数据库有令牌，且与本地不一致，说明被挤下线了
+                    if (profile && profile.active_token && profile.active_token !== localToken)
+                    {
+                        await supabase.auth.signOut();
+                        alert("您的账号已在其他设备登录，您已被强制下线。");
+                        return;
+                    }
+                }
+                // --- if 结束 ---
+
+                // 3. UI 路由 (这部分逻辑保持不变)
+                document.getElementById('auth-container').classList.add('hidden');
+
+                if (profile && profile.is_vip)
+                {
+                    // 已激活：进入主页
+                    document.getElementById('activation-container').classList.add('hidden');
+                    document.getElementById('main-container').classList.remove('hidden');
+                    document.getElementById('vip-user').innerText = user.email;
+                    renderExperiments(); // 渲染实验链接
+                    startHeartbeat(user.id); // 开启心跳检测
+                } else
+                {
+                    // 未激活：进入激活页
+                    document.getElementById('main-container').classList.add('hidden');
+                    document.getElementById('activation-container').classList.remove('hidden');
+                    document.getElementById('user-display').innerText = user.email;
+
+                    // 确保本地有令牌 (为了防止新注册用户没有令牌)
+                    const localToken = localStorage.getItem('bio_session_token');
+                    if (!localToken) updateSessionToken(user.id);
+                }
             }
-
-            // 3. UI 路由
-            document.getElementById('auth-container').classList.add('hidden');
-            
-            if (profile.is_vip) {
-                // 已激活：进入主页
-                document.getElementById('activation-container').classList.add('hidden');
-                document.getElementById('main-container').classList.remove('hidden');
-                document.getElementById('vip-user').innerText = user.email;
-                renderExperiments(); // 渲染实验链接
-                startHeartbeat(user.id); // 开启心跳检测
-            } else {
-                // 未激活：进入激活页
-                document.getElementById('main-container').classList.add('hidden');
-                document.getElementById('activation-container').classList.remove('hidden');
-                document.getElementById('user-display').innerText = user.email;
-                
-                // 确保本地有令牌 (为了防止新注册用户没有令牌)
-                if (!localToken) updateSessionToken(user.id);
-            }
-        }
-
         // ==========================================
         // 认证功能函数
         // ==========================================
@@ -230,8 +248,9 @@
                 {
                     // 登录成功，生成新令牌，踢掉旧设备
                     await updateSessionToken(data.user.id);
-                    // XXX 在这里手动调用，确保令牌更新后再检查 XXX
-                    await checkUserStatus();
+
+                    // --- 修改这一行 ---
+                    await checkUserStatus(true); // 传入 true，表示这是登录后的首次检查
                 }
             }
         // 发送重置密码邮件
@@ -268,6 +287,7 @@
             } else {
                 alert("密码修改成功，请重新登录");
                 await supabase.auth.signOut();
+                localStorage.removeItem('bio_session_token');
                 window.location.href = window.location.origin + window.location.pathname; // 去除 URL hash
             }
         }
