@@ -1,55 +1,14 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
-    <!-- 实验页面专用门卫代码 -->
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script>
-        // 1. 初始化 (填入同样的 URL 和 Key)
-        const _SUPABASE_URL = 'https://psvxbzkuqdpgzgmthdte.supabase.co';
-        const _SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBzdnhiemt1cWRwZ3pnbXRoZHRlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjUwNTI1ODEsImV4cCI6MjA4MDYyODU4MX0.Oyso8hOwbfCs7QlRGwW9LEbBhLTSM-Vhn_-7RAUa418';
-        const _supabase = window.supabase.createClient(_SUPABASE_URL, _SUPABASE_KEY);
-
-        // 2. 立即执行检查
-        (async function checkAccess()
-        {
-            // A. 检查是否登录
-            const { data: { session } } = await _supabase.auth.getSession();
-            if (!session)
-            {
-                alert("未登录，请先登录！");
-                window.location.href = "../index.html"; // 跳回上级主页
-                return;
-            }
-
-            // B. 检查是否 VIP (防绕过)
-            const { data: profile } = await _supabase
-                .from('profiles')
-                .select('is_vip, active_token')
-                .eq('id', session.user.id)
-                .single();
-
-            if (!profile || !profile.is_vip)
-            {
-                alert("您尚未激活付费，无法进入实验！");
-                window.location.href = "../index.html";
-                return;
-            }
-
-            // C. 互踢检查 (可选，为了严谨)
-            const localToken = localStorage.getItem('bio_session_token');
-            if (profile.active_token && profile.active_token !== localToken)
-            {
-                alert("账号在别处登录，您已被踢下线。");
-                await _supabase.auth.signOut();
-                window.location.href = "../index.html";
-            }
-        })();
-    </script>
 <head>
     <meta charset="UTF-8">
     <!-- 视口设置，确保移动端缩放正常 -->
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <link rel="icon" href="../Icon.svg" type="image/svg+xml">
     <title>标记重捕模拟实验</title>
     <link rel="stylesheet" href="../modules/qr-popup/css/qr-popup.css">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="../modules/js/auth-guard.js" defer></script>
     <style>
         /* --- CSS 变量定义 (浅色/深色模式) --- */
         :root {
@@ -99,7 +58,34 @@
                 --sim-bg: #388E3C; /* 深色模式下草地颜色变暗，减少刺眼 */
             }
         }
-
+        .back-to-home {
+            position: fixed;
+            top: 15px;
+            left: 15px;
+            z-index: 9999;
+            background-color: rgba(255, 255, 255, 0.8);
+            color: #333;
+            padding: 8px 12px;
+            border-radius: 20px;
+            text-decoration: none;
+            font-size: 14px;
+            font-weight: bold;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+            transition: all 0.2s;
+        }
+        .back-to-home:hover {
+            background-color: white;
+            transform: scale(1.05);
+        }
+        @media (prefers-color-scheme: dark) {
+            .back-to-home {
+                background-color: rgba(40, 40, 40, 0.8);
+                color: #eee;
+            }
+            .back-to-home:hover {
+                background-color: #333;
+            }
+        }
         * {
             box-sizing: border-box;
             user-select: none;
@@ -383,7 +369,7 @@
     </style>
 </head>
 <body>
-
+<a href="../index.html" class="back-to-home">🏠</a>
 <div id="app">
     <!-- 控制面板 -->
     <div id="control-panel">
