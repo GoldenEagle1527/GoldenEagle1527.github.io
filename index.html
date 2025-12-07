@@ -131,9 +131,7 @@
             supabase.auth.onAuthStateChange(async (event, session) => {
                 if (event === 'PASSWORD_RECOVERY') {
                     showView('update-pwd-view');
-                } else if (event === 'SIGNED_IN') {
-                    checkUserStatus();
-                } else if (event === 'SIGNED_OUT') {
+                }else if (event === 'SIGNED_OUT') {
                     showView('login-view');
                     document.getElementById('auth-container').classList.remove('hidden');
                     document.getElementById('activation-container').classList.add('hidden');
@@ -141,13 +139,16 @@
                 }
             });
             
-            // 初始检查
+             // 初始检查
             const { data: { session } } = await supabase.auth.getSession();
-            if (!session) {
+            if (session)
+            { // 如果已经有会话，则直接检查状态
+                checkUserStatus();
+            } else
+            {
                 showView('login-view');
             }
         });
-
         // 检查用户状态 (VIP与互踢)
         async function checkUserStatus() {
             const { data: { user } } = await supabase.auth.getUser();
@@ -213,23 +214,26 @@
         }
 
         // 登录
-        async function handleLogin() {
-            const email = document.getElementById('email').value;
-            const password = document.getElementById('password').value;
-            const msg = document.getElementById('login-msg');
+        async function handleLogin()
+            {
+                const email = document.getElementById('email').value;
+                const password = document.getElementById('password').value;
+                const msg = document.getElementById('login-msg');
 
-            msg.innerText = "";
-            const { data, error } = await supabase.auth.signInWithPassword({ email, password });
-            
-            if (error) {
-                msg.innerText = "登录失败: " + error.message;
-            } else {
-                // 登录成功，生成新令牌，踢掉旧设备
-                await updateSessionToken(data.user.id);
-                // checkUserStatus 会由 onAuthStateChange 自动触发
+                msg.innerText = "";
+                const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+
+                if (error)
+                {
+                    msg.innerText = "登录失败: " + error.message;
+                } else
+                {
+                    // 登录成功，生成新令牌，踢掉旧设备
+                    await updateSessionToken(data.user.id);
+                    // XXX 在这里手动调用，确保令牌更新后再检查 XXX
+                    await checkUserStatus();
+                }
             }
-        }
-
         // 发送重置密码邮件
         async function handleResetPwd() {
             const email = document.getElementById('forgot-email').value;
