@@ -5,53 +5,34 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="icon" href="Icon.svg" type="image/svg+xml">
     <title>生物实验模拟系统</title>
-    <style>
-        :root { --primary: #2563eb; --bg: #f3f4f6; --card: #ffffff; --text: #1f2937; }
-        body { font-family: sans-serif; background: var(--bg); color: var(--text); display: flex; flex-direction: column; align-items: center; min-height: 100vh; margin: 0; }
-        
-        /* 实验列表样式 */
-        .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 20px; width: 100%; max-width: 800px; margin-top: 40px; }
-        .exp-card { background: white; padding: 30px; border-radius: 12px; text-align: center; box-shadow: 0 4px 6px rgba(0,0,0,0.05); text-decoration: none; color: inherit; font-weight: bold; font-size: 1.2rem; transition: transform 0.2s; border: 1px solid #e5e7eb; display: block; }
-        .exp-card:hover { transform: translateY(-5px); border-color: var(--primary); color: var(--primary); }
-    </style>
+    <!-- 引入 Outfit 字体以提升英文数字排版，结合 Noto Sans SC 支持中文 -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- 引入重构后的外部样式 -->
+    <link rel="stylesheet" href="index.css">
 </head>
 <body>
 
-    <!-- 主界面 -->
-    <div id="main-container" style="width: 100%; display: flex; flex-direction: column; align-items: center;">
-        <header style="margin-top: 40px; text-align: center;">
+    <div id="main-container">
+        <header>
+            <div class="logo-wrapper">
+                <img src="Icon.svg" class="logo-icon" alt="生物实验模拟系统 Logo">
+            </div>
             <h1>生物实验模拟系统</h1>
+            <div class="subtitle">基于 Material Design 3 规范的虚拟实验室</div>
         </header>
 
         <main class="grid" id="experiment-list">
             <!-- 实验链接由 JS 动态注入 -->
         </main>
         
-        <footer style="margin-top: 50px; color: #999; font-size: 0.8rem;">
-            &copy; 2025 生物实验系统
+        <footer>
+            &copy; 2026 生物实验模拟系统 &middot; 探索科学奥秘
         </footer>
     </div>
 
-    <script>
-        // 页面加载时初始化
-        window.addEventListener('load', () => {
-            renderExperiments(); // 渲染实验链接
-        });
-
-        function renderExperiments() {
-            const list = document.getElementById('experiment-list');
-            // 这里定义你的实验链接
-            const experiments = [
-                { name: "标记重捕法", url: "./TagRecaptureExperiment/index.html" },
-                { name: "样方法", url: "./SamplingMethod/index.html" }
-            ];
-            
-            list.innerHTML = experiments.map(exp => `
-                <a href="${exp.url}" class="exp-card">
-                    ${exp.name}
-                </a>
-            `).join('');
-        }
-    </script>
+    <!-- 引入重构后的外部脚本 -->
+    <script type="module" src="index.js"></script>
 </body>
 </html>

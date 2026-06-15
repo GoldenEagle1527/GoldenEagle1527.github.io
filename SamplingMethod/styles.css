@@ -1,0 +1,713 @@
+/* --- CSS 变量定义 (支持 MD3 浅蓝配色及深色模式适配) --- */
+:root {
+    --md-sys-color-primary: #0062a3;
+    --md-sys-color-on-primary: #ffffff;
+    --md-sys-color-primary-container: #d0e4ff;
+    --md-sys-color-on-primary-container: #001d36;
+    --md-sys-color-secondary: #526070;
+    --md-sys-color-on-secondary: #ffffff;
+    --md-sys-color-secondary-container: #d5e4f7;
+    --md-sys-color-on-secondary-container: #0e1d2a;
+    --md-sys-color-tertiary: #6c5778;
+    --md-sys-color-on-tertiary: #ffffff;
+    --md-sys-color-tertiary-container: #f4dbff;
+    --md-sys-color-on-tertiary-container: #261531;
+
+    --md-sys-color-background: #fdfcff;
+    --md-sys-color-on-background: #1a1c1e;
+    --md-sys-color-surface: #fdfcff;
+    --md-sys-color-on-surface: #1a1c1e;
+    --md-sys-color-surface-container: #f0f4f9;
+    --md-sys-color-surface-variant: #dfe3eb;
+    --md-sys-color-on-surface-variant: #43474e;
+    --md-sys-color-outline: #73777f;
+    --md-sys-color-outline-variant: #c3c7cf;
+    --md-sys-color-shadow: rgba(0, 0, 0, 0.05);
+    --md-sys-color-error: #ba1a1a;
+    --md-sys-color-on-error: #ffffff;
+
+    --transition-bounce: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+    --transition-smooth: all 0.25s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+/* 深色模式适配 */
+@media (prefers-color-scheme: dark) {
+    :root {
+        --md-sys-color-primary: #9ecafe;
+        --md-sys-color-on-primary: #003258;
+        --md-sys-color-primary-container: #00497c;
+        --md-sys-color-on-primary-container: #d2e4ff;
+        --md-sys-color-secondary: #bac8db;
+        --md-sys-color-on-secondary: #243240;
+        --md-sys-color-secondary-container: #3b4857;
+        --md-sys-color-on-secondary-container: #d5e4f7;
+        --md-sys-color-tertiary: #d7bee4;
+        --md-sys-color-on-tertiary: #3c2a47;
+        --md-sys-color-tertiary-container: #53405f;
+        --md-sys-color-on-tertiary-container: #f4dbff;
+
+        --md-sys-color-background: #1a1c1e;
+        --md-sys-color-on-background: #e2e2e6;
+        --md-sys-color-surface: #121318;
+        --md-sys-color-on-surface: #e2e2e6;
+        --md-sys-color-surface-container: #1e2025;
+        --md-sys-color-surface-variant: #43474e;
+        --md-sys-color-on-surface-variant: #c3c7cf;
+        --md-sys-color-outline: #8d9199;
+        --md-sys-color-outline-variant: #43474e;
+        --md-sys-color-shadow: rgba(0, 0, 0, 0.3);
+        --md-sys-color-error: #ffb4ab;
+        --md-sys-color-on-error: #690005;
+    }
+}
+
+/* MD3 悬浮球返回按钮 (FAB) */
+.back-to-home {
+    position: fixed;
+    top: 16px;
+    left: 16px;
+    width: 48px;
+    height: 48px;
+    z-index: 9999;
+    background-color: var(--md-sys-color-surface-container);
+    color: var(--md-sys-color-primary);
+    border: 1px solid var(--md-sys-color-outline-variant);
+    border-radius: 16px;
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px;
+    box-shadow: 0 4px 12px var(--md-sys-color-shadow);
+    transition: var(--transition-bounce);
+}
+
+.back-to-home:hover {
+    background-color: var(--md-sys-color-primary-container);
+    color: var(--md-sys-color-on-primary-container);
+    transform: scale(1.08) translateY(-2px);
+    box-shadow: 0 8px 20px var(--md-sys-color-shadow);
+}
+
+* {
+    box-sizing: border-box;
+    user-select: none;
+    -webkit-user-select: none;
+}
+
+body {
+    margin: 0;
+    padding: 0;
+    font-family: 'Outfit', 'Noto Sans SC', sans-serif;
+    height: 100vh;
+    display: flex;
+    background-color: var(--md-sys-color-background);
+    color: var(--md-sys-color-on-background);
+    overflow: hidden;
+    transition: background 0.3s, color 0.3s;
+}
+
+/* 布局: 左控右模 */
+@media (min-width: 768px) {
+    body {
+        flex-direction: row;
+    }
+
+    #control-panel {
+        width: 400px;
+        border-right: 1px solid var(--md-sys-color-outline-variant);
+        order: 1;
+    }
+
+    #simulation-container {
+        flex: 1;
+        order: 2;
+    }
+}
+
+/* 手机: 上模下控 */
+@media (max-width: 767px) {
+    body {
+        flex-direction: column;
+    }
+
+    #simulation-container {
+        flex: 1;
+        order: 1;
+    }
+
+    #control-panel {
+        height: 52%;
+        order: 2;
+        border-top: 1px solid var(--md-sys-color-outline-variant);
+        overflow-y: auto;
+    }
+    
+    .back-to-home {
+        top: 12px;
+        left: 12px;
+        width: 40px;
+        height: 40px;
+        font-size: 18px;
+        border-radius: 12px;
+    }
+}
+
+#simulation-container {
+    position: relative;
+    background-color: var(--md-sys-color-background);
+    overflow: hidden;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 20px;
+}
+
+/* 模拟区域 */
+#simulation-area {
+    width: 100%;
+    max-width: 80vh;
+    background-color: transparent;
+    border: 0px solid var(--md-sys-color-on-background);
+    position: relative;
+    transition: all 0.3s ease-in-out;
+}
+
+/* 方形边界样式 */
+#simulation-area.bordered {
+    border: 2px solid var(--md-sys-color-outline);
+    background-color: var(--md-sys-color-surface-container);
+    border-radius: 24px;
+    box-shadow: 0 8px 32px var(--md-sys-color-shadow);
+    overflow: hidden;
+}
+
+.plant-anchor {
+    position: absolute;
+    transform: translate(-50%, -50%);
+    pointer-events: none;
+    z-index: 1;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.plant-svg {
+    overflow: visible;
+}
+
+/* 呼吸动画：用于高亮目标植物 */
+@keyframes target-pulse {
+    0% {
+        transform: scale(1);
+        filter: drop-shadow(0 0 2px var(--md-sys-color-primary));
+    }
+
+    50% {
+        transform: scale(1.3);
+        filter: drop-shadow(0 0 6px var(--md-sys-color-primary));
+    }
+
+    100% {
+        transform: scale(1);
+        filter: drop-shadow(0 0 2px var(--md-sys-color-primary));
+    }
+}
+
+.plant-highlight {
+    animation: target-pulse 1.5s infinite ease-in-out;
+    z-index: 100;
+}
+
+.plant-dimmed {
+    opacity: 0.15;
+    filter: grayscale(85%);
+}
+
+/* 样方框样式 */
+.quadrat {
+    position: absolute;
+    border: 2px dashed var(--md-sys-color-error);
+    background-color: rgba(186, 26, 26, 0.12);
+    z-index: 10;
+    cursor: grab;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 14px;
+    color: var(--md-sys-color-error);
+    font-weight: 700;
+    transform: translate(-50%, -50%);
+    border-radius: 8px;
+    box-shadow: 0 4px 12px var(--md-sys-color-shadow);
+    transition: border-color 0.25s, background-color 0.25s, color 0.25s;
+}
+
+.quadrat.completed {
+    border-color: #2e7d32;
+    background-color: rgba(46, 125, 50, 0.16);
+    color: #2e7d32;
+}
+
+/* Toast 气泡 */
+.toast-bubble {
+    position: fixed;
+    background: rgba(26, 28, 30, 0.9);
+    backdrop-filter: blur(8px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: #ffffff;
+    padding: 10px 20px;
+    border-radius: 100px;
+    font-size: 13px;
+    font-weight: 500;
+    pointer-events: none;
+    z-index: 9999;
+    transform: translate(-50%, -100%);
+    margin-top: -12px;
+    white-space: nowrap;
+    opacity: 0;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+    transition: opacity 0.3s, transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.toast-bubble.show {
+    opacity: 1;
+}
+
+#control-panel {
+    background-color: var(--md-sys-color-surface-container);
+    display: flex;
+    flex-direction: column;
+    color: var(--md-sys-color-on-background);
+    box-shadow: 4px 0 24px var(--md-sys-color-shadow);
+    z-index: 10;
+}
+
+/* MD3 Tab */
+.tabs {
+    display: flex;
+    border-bottom: 1px solid var(--md-sys-color-outline-variant);
+    background: var(--md-sys-color-surface-container);
+    flex-shrink: 0;
+    padding: 0 16px;
+    gap: 8px;
+}
+
+.tab-btn {
+    flex: 1;
+    padding: 14px 8px;
+    background: transparent;
+    border: none;
+    font-weight: 500;
+    color: var(--md-sys-color-on-surface-variant);
+    font-size: 15px;
+    cursor: pointer;
+    transition: var(--transition-smooth);
+    position: relative;
+    font-family: inherit;
+}
+
+.tab-btn.active {
+    color: var(--md-sys-color-primary);
+    font-weight: 700;
+}
+
+.tab-btn::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 50%;
+    transform: translateX(-50%) scaleX(0);
+    width: 40px;
+    height: 3px;
+    background-color: var(--md-sys-color-primary);
+    border-radius: 3px 3px 0 0;
+    transition: var(--transition-bounce);
+}
+
+.tab-btn.active::after {
+    transform: translateX(-50%) scaleX(1);
+}
+
+.tab-content {
+    display: none;
+    padding: 20px;
+    flex: 1;
+    overflow-y: auto;
+}
+
+.tab-content.active {
+    display: block;
+}
+
+.section {
+    margin-bottom: 20px;
+    border-bottom: 1px solid var(--md-sys-color-outline-variant);
+    padding-bottom: 16px;
+}
+
+.section-title {
+    font-weight: 700;
+    margin-bottom: 12px;
+    color: var(--md-sys-color-primary);
+    font-size: 0.95rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    letter-spacing: -0.2px;
+}
+
+/* 样方预设 Filter Chips 样式 */
+.preset-scroll {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 12px;
+    overflow-x: auto;
+    padding-bottom: 4px;
+}
+
+.preset-item {
+    border: 1px solid var(--md-sys-color-outline);
+    padding: 8px 16px;
+    border-radius: 100px; /* MD3 Chip 圆角 */
+    cursor: pointer;
+    background: var(--md-sys-color-surface);
+    color: var(--md-sys-color-on-surface);
+    font-size: 13px;
+    font-weight: 500;
+    white-space: nowrap;
+    transition: var(--transition-smooth);
+}
+
+.preset-item:hover {
+    background-color: var(--md-sys-color-surface-container);
+}
+
+.preset-item.selected {
+    border-color: var(--md-sys-color-primary);
+    background-color: var(--md-sys-color-primary-container);
+    color: var(--md-sys-color-on-primary-container);
+    font-weight: 700;
+}
+
+/* MD3 样式按钮 */
+.btn {
+    width: 100%;
+    padding: 12px 16px;
+    border: 1.5px solid var(--md-sys-color-outline);
+    background: var(--md-sys-color-surface);
+    color: var(--md-sys-color-on-surface);
+    border-radius: 100px;
+    cursor: pointer;
+    text-align: center;
+    font-size: 13px;
+    font-weight: 600;
+    font-family: inherit;
+    transition: var(--transition-bounce);
+    box-shadow: 0 2px 6px var(--md-sys-color-shadow);
+}
+
+.btn:hover {
+    transform: scale(1.02);
+    box-shadow: 0 4px 12px var(--md-sys-color-shadow);
+    background-color: var(--md-sys-color-surface-container);
+}
+
+.btn:active {
+    transform: scale(0.98);
+}
+
+/* MD3 Segmented Buttons (分段按钮组) */
+.action-group {
+    display: flex;
+    gap: 0; /* 紧贴在一起 */
+    margin-bottom: 12px;
+    background-color: var(--md-sys-color-surface);
+    border-radius: 100px;
+    border: 1.5px solid var(--md-sys-color-outline);
+    overflow: hidden;
+    box-shadow: 0 2px 6px var(--md-sys-color-shadow);
+}
+
+.action-group .btn {
+    flex: 1;
+    border: none;
+    border-radius: 0;
+    background: transparent;
+    box-shadow: none;
+    padding: 10px;
+    font-size: 13px;
+    border-right: 1px solid var(--md-sys-color-outline-variant);
+}
+
+.action-group .btn:last-child {
+    border-right: none;
+}
+
+.action-group .btn:hover {
+    transform: none;
+    background-color: rgba(0, 0, 0, 0.04);
+}
+@media (prefers-color-scheme: dark) {
+    .action-group .btn:hover {
+        background-color: rgba(255, 255, 255, 0.06);
+    }
+}
+
+.action-group .btn.highlight {
+    background-color: var(--md-sys-color-primary-container);
+    color: var(--md-sys-color-on-primary-container);
+    font-weight: 700;
+}
+
+/* 独立的高亮/主色按钮 */
+.btn.highlight:not(div .btn) {
+    background-color: var(--md-sys-color-primary);
+    color: var(--md-sys-color-on-primary);
+    border-color: var(--md-sys-color-primary);
+    box-shadow: 0 4px 12px var(--md-sys-color-shadow);
+}
+.btn.highlight:not(div .btn):hover {
+    background-color: #00548d;
+}
+@media (prefers-color-scheme: dark) {
+    .btn.highlight:not(div .btn):hover {
+        background-color: #b3d7ff;
+    }
+}
+
+.btn-danger.highlight {
+    background-color: var(--md-sys-color-error);
+    border-color: var(--md-sys-color-error);
+    color: var(--md-sys-color-on-error);
+}
+
+.btn-primary {
+    background-color: var(--md-sys-color-primary);
+    color: var(--md-sys-color-on-primary);
+    border: none;
+    font-size: 14px;
+    margin-top: 8px;
+    padding: 14px 20px;
+}
+.btn-primary:hover {
+    background-color: #00548d;
+}
+
+.btn-success {
+    background-color: #2e7d32;
+    color: white;
+    border: none;
+    margin-top: 16px;
+    padding: 14px 20px;
+}
+.btn-success:hover {
+    background-color: #1b5e20;
+}
+
+.btn-sm {
+    width: auto;
+    padding: 6px 12px;
+    font-size: 12px;
+    box-shadow: none;
+}
+
+.info-display {
+    background: var(--md-sys-color-surface);
+    padding: 10px 14px;
+    border-radius: 12px;
+    font-size: 12px;
+    color: var(--md-sys-color-on-surface-variant);
+    line-height: 1.5;
+    margin-bottom: 10px;
+    border: 1px solid var(--md-sys-color-outline-variant);
+}
+
+/* 结果展示卡片 */
+.result-box {
+    background: var(--md-sys-color-tertiary-container);
+    border-left: 5px solid var(--md-sys-color-tertiary);
+    padding: 14px;
+    margin-top: 14px;
+    font-size: 13px;
+    border-radius: 4px 16px 16px 4px;
+    color: var(--md-sys-color-on-tertiary-container);
+    box-shadow: 0 4px 12px var(--md-sys-color-shadow);
+}
+
+.result-line {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 8px;
+    padding-bottom: 6px;
+    border-bottom: 1px dashed var(--md-sys-color-outline-variant);
+}
+.result-line:last-child {
+    border-bottom: none;
+    margin-bottom: 0;
+    padding-bottom: 0;
+}
+
+.setting-item {
+    margin-bottom: 14px;
+}
+
+.setting-item label {
+    display: block;
+    margin-bottom: 6px;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--md-sys-color-on-background);
+}
+
+/* 输入控件 */
+input[type="text"],
+input[type="number"],
+select {
+    border: 1.5px solid var(--md-sys-color-outline-variant);
+    border-radius: 12px;
+    padding: 8px 12px;
+    font-size: 13px;
+    font-family: inherit;
+    width: 100%;
+    background: var(--md-sys-color-surface);
+    color: var(--md-sys-color-on-surface);
+    outline: none;
+    transition: var(--transition-smooth);
+}
+input[type="text"]:focus,
+input[type="number"]:focus,
+select:focus {
+    border-color: var(--md-sys-color-primary);
+    box-shadow: 0 0 0 3px rgba(0, 98, 163, 0.15);
+}
+
+input[type="range"] {
+    width: 100%;
+    accent-color: var(--md-sys-color-primary);
+    height: 6px;
+    background: var(--md-sys-color-surface-variant);
+    border-radius: 3px;
+    outline: none;
+}
+
+/* 物种卡片 (MD3 Outlined Card) */
+.species-card {
+    background: var(--md-sys-color-surface);
+    border: 1.5px solid var(--md-sys-color-outline-variant);
+    border-left-width: 6px; /* 侧边物种代表色 */
+    border-radius: 16px;
+    padding: 14px;
+    margin-bottom: 12px;
+    position: relative;
+    box-shadow: 0 2px 6px var(--md-sys-color-shadow);
+    transition: var(--transition-bounce);
+}
+
+.species-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px var(--md-sys-color-shadow);
+    border-color: var(--md-sys-color-outline);
+}
+
+.species-header {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 10px;
+    align-items: center;
+}
+
+.species-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+}
+
+/* 模态框 / 弹窗 (MD3 Dialog) */
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.35);
+    display: none;
+    justify-content: center;
+    align-items: center;
+    z-index: 2000;
+    backdrop-filter: blur(12px) saturate(140%);
+    transition: var(--transition-smooth);
+}
+
+@media (prefers-color-scheme: dark) {
+    .modal-overlay {
+        background: rgba(0, 0, 0, 0.6);
+    }
+}
+
+.modal {
+    background: var(--md-sys-color-surface);
+    padding: 28px;
+    border-radius: 28px; /* 大圆角 */
+    width: 620px;
+    max-width: 95vw;
+    max-height: 95vh;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    box-shadow: 0 16px 48px var(--md-sys-color-shadow);
+    color: var(--md-sys-color-on-surface);
+    border: 1px solid var(--md-sys-color-outline-variant);
+}
+
+.quadrat-view-container {
+    width: 480px;
+    height: 480px;
+    max-width: 100%;
+    aspect-ratio: 1/1;
+    margin: 0 auto;
+    position: relative;
+    background: var(--md-sys-color-surface-container);
+    border: 1.5px solid var(--md-sys-color-outline-variant);
+    overflow: hidden;
+    border-radius: 20px;
+    box-shadow: inset 0 2px 8px var(--md-sys-color-shadow);
+}
+
+@media (max-width: 600px) {
+    .modal {
+        width: 95vw;
+        padding: 18px;
+        gap: 14px;
+    }
+
+    .quadrat-view-container {
+        width: 100%;
+        height: auto;
+        aspect-ratio: 1/1;
+    }
+}
+
+#target-select-wrapper {
+    background: var(--md-sys-color-primary-container);
+    color: var(--md-sys-color-on-primary-container);
+    padding: 12px 16px;
+    border-radius: 16px;
+    margin-bottom: 12px;
+    border: 1px solid var(--md-sys-color-outline-variant);
+}
+
+/* 形状控制组背景 */
+.shape-control-group {
+    background: rgba(0, 0, 0, 0.03);
+    padding: 12px;
+    border-radius: 16px;
+    border: 1px solid var(--md-sys-color-outline-variant);
+    margin-top: 8px;
+    display: none;
+}
+@media (prefers-color-scheme: dark) {
+    .shape-control-group {
+        background: rgba(255, 255, 255, 0.03);
+    }
+}

@@ -1,0 +1,475 @@
+/* --- CSS 变量定义 (MD3 浅蓝配色体系，支持深浅色模式) --- */
+:root {
+    --md-sys-color-primary: #0062a3;
+    --md-sys-color-on-primary: #ffffff;
+    --md-sys-color-primary-container: #d0e4ff;
+    --md-sys-color-on-primary-container: #001d36;
+    --md-sys-color-secondary: #526070;
+    --md-sys-color-on-secondary: #ffffff;
+    --md-sys-color-secondary-container: #d5e4f7;
+    --md-sys-color-on-secondary-container: #0e1d2a;
+    --md-sys-color-tertiary: #6c5778;
+    --md-sys-color-on-tertiary: #ffffff;
+    --md-sys-color-tertiary-container: #f4dbff;
+    --md-sys-color-on-tertiary-container: #261531;
+    
+    --md-sys-color-background: #fdfcff;
+    --md-sys-color-on-background: #1a1c1e;
+    --md-sys-color-surface: #fdfcff;
+    --md-sys-color-on-surface: #1a1c1e;
+    --md-sys-color-surface-container: #f0f4f9;
+    --md-sys-color-surface-variant: #dfe3eb;
+    --md-sys-color-on-surface-variant: #43474e;
+    --md-sys-color-outline: #73777f;
+    --md-sys-color-outline-variant: #c3c7cf;
+    --md-sys-color-shadow: rgba(0, 0, 0, 0.05);
+
+    --sim-bg: #e2f3e3; /* 浅色模式下的柔和草地绿 */
+    --sim-border: #a2dbaf;
+    --transition-bounce: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+    --transition-smooth: all 0.2s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+@media (prefers-color-scheme: dark) {
+    :root {
+        --md-sys-color-primary: #9ecafe;
+        --md-sys-color-on-primary: #003258;
+        --md-sys-color-primary-container: #00497c;
+        --md-sys-color-on-primary-container: #d2e4ff;
+        --md-sys-color-secondary: #bac8db;
+        --md-sys-color-on-secondary: #243240;
+        --md-sys-color-secondary-container: #3b4857;
+        --md-sys-color-on-secondary-container: #d5e4f7;
+        --md-sys-color-tertiary: #d7bee4;
+        --md-sys-color-on-tertiary: #3c2a47;
+        --md-sys-color-tertiary-container: #53405f;
+        --md-sys-color-on-tertiary-container: #f4dbff;
+        
+        --md-sys-color-background: #1a1c1e;
+        --md-sys-color-on-background: #e2e2e6;
+        --md-sys-color-surface: #121318;
+        --md-sys-color-on-surface: #e2e2e6;
+        --md-sys-color-surface-container: #1e2025;
+        --md-sys-color-surface-variant: #43474e;
+        --md-sys-color-on-surface-variant: #c3c7cf;
+        --md-sys-color-outline: #8d9199;
+        --md-sys-color-outline-variant: #43474e;
+        --md-sys-color-shadow: rgba(0, 0, 0, 0.3);
+
+        --sim-bg: #1e2e20; /* 深色模式下草地绿调暗 */
+        --sim-border: #2e4d33;
+    }
+}
+
+/* MD3 风格悬浮球返回按钮 (FAB) */
+.back-to-home {
+    position: fixed;
+    top: 16px;
+    left: 16px;
+    width: 48px;
+    height: 48px;
+    z-index: 9999;
+    background-color: var(--md-sys-color-surface-container);
+    color: var(--md-sys-color-primary);
+    border: 1px solid var(--md-sys-color-outline-variant);
+    border-radius: 16px;
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px;
+    box-shadow: 0 4px 12px var(--md-sys-color-shadow);
+    transition: var(--transition-bounce);
+}
+
+.back-to-home:hover {
+    background-color: var(--md-sys-color-primary-container);
+    color: var(--md-sys-color-on-primary-container);
+    transform: scale(1.08) translateY(-2px);
+    box-shadow: 0 8px 20px var(--md-sys-color-shadow);
+}
+
+* {
+    box-sizing: border-box;
+    user-select: none;
+    -webkit-tap-highlight-color: transparent;
+}
+
+body, html {
+    margin: 0;
+    padding: 0;
+    height: 100%;
+    font-family: 'Outfit', 'Noto Sans SC', sans-serif;
+    overflow: hidden;
+    background-color: var(--md-sys-color-background);
+    color: var(--md-sys-color-on-background);
+    transition: background-color 0.3s, color 0.3s;
+}
+
+#app {
+    display: flex;
+    height: 100vh;
+    width: 100vw;
+    flex-direction: row; /* 默认桌面端：左右布局 */
+}
+
+/* 左侧功能区 (Desktop) */
+#control-panel {
+    width: 380px;
+    background-color: var(--md-sys-color-surface-container);
+    border-right: 1px solid var(--md-sys-color-outline-variant);
+    display: flex;
+    flex-direction: column;
+    box-shadow: 4px 0 24px var(--md-sys-color-shadow);
+    z-index: 10;
+    transition: background-color 0.3s;
+}
+
+h2 {
+    margin: 0;
+    color: var(--md-sys-color-on-background);
+    text-align: center;
+    padding: 24px 20px 16px 20px;
+    font-size: 1.4rem;
+    font-weight: 700;
+    letter-spacing: -0.5px;
+}
+
+.tab-container {
+    display: flex;
+    padding: 0 16px;
+    border-bottom: 1px solid var(--md-sys-color-outline-variant);
+    gap: 8px;
+}
+
+.tab {
+    flex: 1;
+    padding: 12px 8px;
+    text-align: center;
+    cursor: pointer;
+    transition: var(--transition-smooth);
+    font-size: 15px;
+    font-weight: 500;
+    color: var(--md-sys-color-on-surface-variant);
+    position: relative;
+}
+
+.tab.active {
+    font-weight: 700;
+    color: var(--md-sys-color-primary);
+}
+
+/* MD3 tab 指示器药丸条 */
+.tab::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 50%;
+    transform: translateX(-50%) scaleX(0);
+    width: 40px;
+    height: 3px;
+    background-color: var(--md-sys-color-primary);
+    border-radius: 3px 3px 0 0;
+    transition: var(--transition-bounce);
+}
+
+.tab.active::after {
+    transform: translateX(-50%) scaleX(1);
+}
+
+.tab-content {
+    flex: 1;
+    display: none;
+    padding: 20px;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch; 
+}
+
+.tab-content.active {
+    display: flex;
+    flex-direction: column;
+}
+
+/* 状态指示框 */
+.status-box {
+    background: var(--md-sys-color-secondary-container);
+    padding: 14px;
+    border-radius: 16px;
+    margin-bottom: 20px;
+    color: var(--md-sys-color-on-secondary-container);
+    font-weight: 600;
+    text-align: center;
+    border: 1px solid var(--md-sys-color-outline-variant);
+    font-size: 0.95rem;
+    line-height: 1.4;
+    box-shadow: 0 2px 6px var(--md-sys-color-shadow);
+}
+
+.btn-group {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin-bottom: 20px;
+}
+
+/* MD3 风格按钮重构 */
+button {
+    padding: 14px 20px;
+    font-size: 0.95rem;
+    font-family: inherit;
+    cursor: pointer;
+    background-color: var(--md-sys-color-primary);
+    color: var(--md-sys-color-on-primary);
+    border: none;
+    border-radius: 100px; /* MD3 椭圆形药丸按钮 */
+    transition: var(--transition-bounce);
+    font-weight: 600;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    box-shadow: 0 4px 12px var(--md-sys-color-shadow);
+}
+
+button:hover:not(:disabled) {
+    transform: scale(1.02);
+    box-shadow: 0 6px 16px var(--md-sys-color-shadow);
+    background-color: #00548d; /* 稍暗的交互色 */
+}
+
+@media (prefers-color-scheme: dark) {
+    button:hover:not(:disabled) {
+        background-color: #b3d7ff; /* 稍亮的交互色 */
+    }
+}
+
+button:active:not(:disabled) {
+    transform: scale(0.98);
+}
+
+button:disabled {
+    background-color: var(--md-sys-color-surface-variant);
+    color: var(--md-sys-color-on-surface-variant);
+    opacity: 0.5;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+}
+
+/* 次要/重置 按钮 */
+button.secondary {
+    background-color: var(--md-sys-color-secondary-container);
+    color: var(--md-sys-color-on-secondary-container);
+    justify-content: center;
+    box-shadow: 0 2px 6px var(--md-sys-color-shadow);
+}
+button.secondary:hover:not(:disabled) {
+    background-color: var(--md-sys-color-outline-variant);
+}
+
+/* 第三色/分享 按钮 */
+button.share-btn {
+    background-color: var(--md-sys-color-tertiary-container);
+    color: var(--md-sys-color-on-tertiary-container);
+    justify-content: center;
+    margin-top: 20px;
+    box-shadow: 0 2px 6px var(--md-sys-color-shadow);
+}
+button.share-btn:hover:not(:disabled) {
+    background-color: #e5ccf0;
+}
+@media (prefers-color-scheme: dark) {
+    button.share-btn:hover:not(:disabled) {
+        background-color: #473652;
+    }
+}
+
+.btn-count {
+    background: rgba(0, 0, 0, 0.08);
+    color: inherit;
+    padding: 4px 10px;
+    border-radius: 12px;
+    font-size: 0.85rem;
+    min-width: 46px;
+    text-align: center;
+    font-weight: 700;
+}
+
+@media (prefers-color-scheme: dark) {
+    .btn-count {
+        background: rgba(255, 255, 255, 0.12);
+    }
+}
+
+/* 终端式控制台日志 */
+.log-area {
+    flex: 1;
+    background: var(--md-sys-color-surface);
+    border: 1px solid var(--md-sys-color-outline-variant);
+    border-radius: 16px;
+    padding: 14px;
+    overflow-y: auto;
+    font-family: 'Consolas', 'Courier New', monospace;
+    font-size: 0.85rem;
+    color: var(--md-sys-color-on-surface-variant);
+    margin-bottom: 10px;
+    box-shadow: inset 0 2px 6px var(--md-sys-color-shadow);
+}
+
+.log-entry { 
+    margin-bottom: 8px; 
+    border-bottom: 1px dashed var(--md-sys-color-outline-variant); 
+    padding-bottom: 4px; 
+    line-height: 1.4;
+}
+.log-info { color: #007cc0; font-weight: 500; }
+.log-success { color: #2e7d32; font-weight: bold; }
+.log-warn { color: #c67c00; }
+
+@media (prefers-color-scheme: dark) {
+    .log-info { color: #78c2ff; }
+    .log-success { color: #81c784; }
+    .log-warn { color: #ffb74d; }
+}
+
+.log-result { 
+    background-color: var(--md-sys-color-tertiary-container); 
+    border-left: 4px solid var(--md-sys-color-tertiary); 
+    border-radius: 4px 12px 12px 4px;
+    padding: 10px; 
+    margin-top: 8px; 
+    color: var(--md-sys-color-on-tertiary-container);
+    font-weight: bold;
+}
+
+/* 设置区表单 */
+.settings-group {
+    margin-bottom: 18px;
+}
+
+.settings-group label { 
+    display: block; 
+    margin-bottom: 6px; 
+    font-size: 0.9rem; 
+    font-weight: 600;
+    color: var(--md-sys-color-on-surface-variant); 
+}
+
+.settings-group input { 
+    width: 100%; 
+    padding: 12px 16px; 
+    border: 1.5px solid var(--md-sys-color-outline-variant); 
+    border-radius: 12px; 
+    font-size: 0.95rem;
+    background-color: var(--md-sys-color-surface);
+    color: var(--md-sys-color-on-surface);
+    outline: none;
+    transition: var(--transition-smooth);
+    font-family: inherit;
+}
+
+.settings-group input:focus {
+    border-color: var(--md-sys-color-primary);
+    box-shadow: 0 0 0 3px rgba(0, 98, 163, 0.15);
+}
+
+@media (prefers-color-scheme: dark) {
+    .settings-group input:focus {
+        box-shadow: 0 0 0 3px rgba(158, 202, 254, 0.2);
+    }
+}
+
+/* 右侧模拟区 (Desktop) */
+#simulation-area {
+    flex: 1;
+    position: relative;
+    background-color: var(--sim-bg); 
+    border-left: 1px solid var(--md-sys-color-outline-variant);
+    overflow: hidden;
+    cursor: crosshair;
+    transition: background-color 0.3s;
+}
+
+canvas { display: block; width: 100%; height: 100%; }
+
+/* MD3 提示气泡 */
+.tooltip {
+    position: absolute;
+    top: 24px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(26, 28, 30, 0.85);
+    backdrop-filter: blur(8px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: #ffffff;
+    padding: 10px 24px;
+    border-radius: 100px;
+    pointer-events: none;
+    font-size: 0.9rem;
+    font-weight: 500;
+    z-index: 100;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+    transition: opacity 0.3s;
+    white-space: nowrap;
+}
+
+/* --- 移动端适配 (Media Queries) --- */
+@media (max-width: 768px) {
+    #app {
+        flex-direction: column-reverse; 
+    }
+
+    #control-panel {
+        width: 100%;
+        flex: 1;
+        border-right: none;
+        border-top: 1px solid var(--md-sys-color-outline-variant);
+        height: auto;
+        max-height: 55vh; 
+    }
+
+    #simulation-area {
+        height: 45vh;
+        flex: none; 
+        border-bottom: 1px solid var(--md-sys-color-outline-variant);
+        border-left: none;
+    }
+
+    h2 {
+        padding: 16px;
+        font-size: 1.2rem;
+    }
+
+    .tab {
+        padding: 10px;
+        font-size: 14px;
+    }
+
+    .tab-content {
+        padding: 16px;
+    }
+    
+    button {
+        padding: 12px 18px;
+        font-size: 0.9rem;
+    }
+    
+    .log-area {
+        font-size: 0.8rem;
+        border-radius: 12px;
+    }
+
+    .tooltip {
+        top: 16px;
+        font-size: 0.8rem;
+        padding: 6px 16px;
+    }
+    
+    .back-to-home {
+        top: 12px;
+        left: 12px;
+        width: 40px;
+        height: 40px;
+        font-size: 18px;
+        border-radius: 12px;
+    }
+}
