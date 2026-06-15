@@ -1,0 +1,862 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>样方法模拟 (SVG高清边框版)</title>
+    <style>
+        :root {
+            --primary-color: #2c3e50;
+            --accent-color: #3498db;
+            --highlight-color: #e74c3c;
+            --bg-color: #f5f6fa;
+            --panel-bg: #ffffff;
+            --border-color: #dcdde1;
+        }
+
+        * {
+            box-sizing: border-box;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: "Helvetica Neue", Helvetica, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", Arial, sans-serif;
+            height: 100vh;
+            display: flex;
+            background-color: var(--bg-color);
+            overflow: hidden;
+        }
+
+        @media (min-width: 768px) {
+            body { flex-direction: row; }
+            #control-panel {
+                width: 320px;
+                border-right: 1px solid var(--border-color);
+                order: 1;
+            }
+            #simulation-container {
+                flex: 1;
+                order: 2;
+                padding: 40px;
+            }
+        }
+
+        @media (max-width: 767px) {
+            body { flex-direction: column; }
+            #simulation-container {
+                flex: 1;
+                order: 1; 
+                padding: 10px;
+            }
+            #control-panel {
+                height: 50%;
+                order: 2;
+                border-top: 1px solid var(--border-color);
+                overflow-y: auto;
+            }
+        }
+
+        #simulation-container {
+            background-color: #fff;
+            position: relative;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        #simulation-area {
+            width: 100%;
+            max-width: 1000px;
+            /* 保持 2:1 比例 */
+            aspect-ratio: 2 / 1; 
+            position: relative;
+            /* 移除原来的 CSS 渐变，改用透明背景，因为有 SVG 垫底 */
+            background: transparent; 
+            overflow: hidden; 
+        }
+
+        /* 背景 SVG 层 */
+        #bg-layer {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 0; /* 最底层 */
+        }
+
+        .plant {
+            position: absolute;
+            background-color: #27ae60; 
+            border-radius: 50%;
+            transform: translate(-50%, -50%);
+            pointer-events: none;
+            z-index: 1; /* 在背景之上 */
+        }
+
+        .quadrat {
+            position: absolute;
+            border: 2px dashed red;
+            background-color: rgba(255, 0, 0, 0.1);
+            z-index: 10;
+            cursor: grab;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 14px;
+            color: red;
+            font-weight: bold;
+            transform: translate(-50%, -50%); 
+        }
+        .quadrat.completed {
+            border-color: #27ae60;
+            background-color: rgba(39, 174, 96, 0.2);
+            color: #27ae60;
+        }
+
+        .toast-bubble {
+            position: fixed;
+            background: rgba(0, 0, 0, 0.8);
+            color: white;
+            padding: 8px 12px;
+            border-radius: 4px;
+            font-size: 12px;
+            pointer-events: none;
+            z-index: 9999;
+            transform: translate(-50%, -100%);
+            margin-top: -10px;
+            white-space: nowrap;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+        .toast-bubble.show { opacity: 1; }
+
+        #control-panel { background-color: var(--panel-bg); display: flex; flex-direction: column; }
+        .tabs { display: flex; border-bottom: 1px solid var(--border-color); background: #f1f2f6; flex-shrink: 0; }
+        .tab-btn { flex: 1; padding: 12px; background: #f1f2f6; border: none; font-weight: bold; color: #7f8c8d; font-size: 14px; cursor: pointer; }
+        .tab-btn.active { background: #fff; color: var(--primary-color); border-bottom: 2px solid var(--accent-color); }
+        .tab-content { display: none; padding: 15px; flex: 1; overflow-y: auto; }
+        .tab-content.active { display: block; }
+
+        .section { margin-bottom: 15px; border-bottom: 1px solid #eee; padding-bottom: 10px; }
+        .section-title { font-weight: bold; margin-bottom: 8px; color: var(--primary-color); font-size: 14px; }
+        
+        .preset-scroll { display: flex; gap: 8px; margin-bottom: 8px; overflow-x: auto; }
+        .preset-item { border: 1px solid var(--border-color); padding: 6px 12px; border-radius: 4px; cursor: pointer; background: #fff; font-size: 13px; white-space: nowrap; }
+        .preset-item.selected { border-color: var(--accent-color); background-color: #ebf5fb; color: var(--accent-color); }
+
+        .btn { width: 100%; padding: 10px; border: 1px solid var(--border-color); background: #fff; border-radius: 4px; cursor: pointer; text-align: center; font-size: 13px; }
+        .action-group { display: flex; gap: 8px; margin-bottom: 10px; }
+        .btn.highlight { background-color: var(--accent-color); color: white; border-color: var(--accent-color); }
+        .btn-danger.highlight { background-color: var(--highlight-color); border-color: var(--highlight-color); }
+        .btn-primary { background-color: var(--primary-color); color: white; border: none; font-size: 14px; margin-top: 5px; }
+
+        .info-display { background: #f8f9fa; padding: 8px; border-radius: 4px; font-size: 12px; color: #666; line-height: 1.4; margin-bottom: 8px; }
+        .result-box { background: #fdfefe; border: 1px solid #dcdde1; padding: 10px; margin-top: 10px; font-size: 13px; border-radius: 4px; }
+        .result-line { display: flex; justify-content: space-between; margin-bottom: 6px; padding-bottom: 6px; border-bottom: 1px dashed #eee; }
+
+        .setting-item { margin-bottom: 15px; }
+        .setting-item label { display: block; margin-bottom: 5px; font-size: 13px; }
+        .range-wrap { display: flex; align-items: center; gap: 10px; font-size: 12px; }
+        input[type="range"] { flex: 1; }
+
+        .modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); display: none; justify-content: center; align-items: center; z-index: 2000; }
+        .modal { background: white; padding: 20px; border-radius: 8px; width: 300px; display: flex; flex-direction: column; gap: 15px; }
+        .quadrat-view-container { width: 200px; height: 200px; margin: 0 auto; position: relative; background: #fff; border: 1px solid #ddd; overflow: hidden; }
+
+    </style>
+</head>
+<body>
+
+    <div id="toast-bubble" class="toast-bubble">提示信息</div>
+
+    <div id="control-panel">
+        <div class="tabs">
+            <button class="tab-btn active" onclick="switchTab('main')">主要功能</button>
+            <button class="tab-btn" onclick="switchTab('settings')">设置</button>
+        </div>
+
+        <div id="tab-main" class="tab-content active">
+            <div class="section">
+                <div class="section-title">样方预设 (正方形)</div>
+                <div class="preset-scroll">
+                    <div class="preset-item selected" onclick="selectPreset(1, this)">1m</div>
+                    <div class="preset-item" onclick="selectPreset(2, this)">2m</div>
+                    <div class="preset-item" onclick="selectPreset(3, this)">3m</div>
+                    <div class="preset-item" onclick="selectPreset('custom', this)">自定义</div>
+                </div>
+                <div id="preset-info" class="info-display">当前选择: 边长 1m</div>
+                <div id="custom-input-div" style="display:none; align-items:center; gap:10px; margin-bottom:5px; font-size:13px;">
+                    <label>边长(m):</label>
+                    <input type="number" id="custom-size-input" value="10" min="1" max="100" style="width:60px; padding:4px;">
+                </div>
+            </div>
+
+            <div class="section">
+                <div class="section-title">操作模式</div>
+                <div class="action-group">
+                    <button class="btn" id="btn-place" onclick="setMode('place')">放置</button>
+                    <button class="btn" id="btn-move" onclick="setMode('move')">移动</button>
+                    <button class="btn btn-danger" id="btn-delete" onclick="setMode('delete')">删除</button>
+                </div>
+                <div class="info-display" id="mode-info">请选择操作模式</div>
+            </div>
+
+            <div class="section">
+                <button class="btn btn-primary" id="btn-start-stats" onclick="startStatistics()">开始统计</button>
+                
+                <div id="stats-panel" style="display:none; margin-top: 15px;">
+                    <div class="info-display">
+                        统计中... 请点击红色样方录入数据<br>
+                        公式: 总密度 = Σ(样方密度) / 样方数
+                    </div>
+                    
+                    <div id="result-display" style="display:none;">
+                        <div class="result-box" style="border-left: 4px solid var(--accent-color);">
+                            <div class="section-title">统计结果报告</div>
+                            <div class="result-line"><span>您的估算密度:</span> <strong id="user-density">--</strong> 株/m²</div>
+                            <div class="result-line"><span>真实平均密度:</span> <strong id="true-density">--</strong> 株/m²</div>
+                            <div class="result-line"><span>相对误差:</span> <strong id="error-rate" style="color:red">--</strong>%</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="tab-settings" class="tab-content">
+            <div class="section">
+                <div class="setting-item">
+                    <label>半圆环外径 (m):</label>
+                    <!-- 1. 修改默认值为 13 -->
+                    <input type="number" id="setting-area-size" value="13" onchange="updateSettings()">
+                </div>
+                <div class="info-display">内径比例固定约为 1/3</div>
+
+                <div class="setting-item">
+                    <label>随机分布种子 (Seed):</label>
+                    <div style="display:flex; gap:8px;">
+                        <input type="number" id="setting-seed" value="12345" style="flex:1; padding:5px; border:1px solid #ddd; border-radius:4px;" onchange="updateSettings()">
+                        <button class="btn" style="width: auto; padding: 0 12px;" onclick="randomizeSeed()" title="生成随机种子">🎲</button>
+                    </div>
+                </div>
+
+                <div class="setting-item">
+                    <label>植物数量 (1k-4k): <span id="plant-count-val">2000</span></label>
+                    <div class="range-wrap">
+                        <span>1k</span>
+                        <!-- 2. 修改默认值为 2000 -->
+                        <input type="range" id="setting-plant-count" min="1000" max="4000" value="2000" oninput="updateSettingsUI();" onchange="updateSettings()">
+                        <span>4k</span>
+                    </div>
+                </div>
+                <div class="setting-item">
+                    <label>分布模式 (0=聚集, 1=随机): <span id="dispersion-val">0.1</span></label>
+                    <div class="range-wrap">
+                        <span>0</span>
+                        <!-- 3. 修改默认值为 0.1 -->
+                        <input type="range" id="setting-dispersion" min="0" max="1" step="0.1" value="0.1" oninput="updateSettingsUI();" onchange="updateSettings()">
+                        <span>1</span>
+                    </div>
+                </div>
+                <button class="btn btn-primary" onclick="resetSimulation()">重置并应用设置</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="simulation-container">
+        <div id="simulation-area">
+            <!-- 4. SVG 层：用于绘制高清边框 -->
+            <!-- 
+                 ViewBox 0 0 1000 500: 
+                 宽度 1000, 高度 500 (2:1)
+                 圆心 (500, 500)
+                 外半径 480 (留20px margin)
+                 内半径 160 (1/3 比例)
+            -->
+            <svg id="bg-layer" viewBox="0 0 1000 500" preserveAspectRatio="none">
+                <!-- 定义路径: M(移动) -> L(直线) -> A(弧线) -> L(直线) -> A(弧线) -> Z(闭合) -->
+                <!-- 
+                   M 340 500 (内圈左下点: 500 - 160)
+                   L 20  500 (外圈左下点: 500 - 480)
+                   A 480 480 0 0 1 980 500 (画外半圆到右下点: 500 + 480)
+                   L 660 500 (内圈右下点: 500 + 160)
+                   A 160 160 0 0 0 340 500 (画内半圆回到起点，注意 sweep-flag 是 0)
+                   Z
+                -->
+                <path d="M 340 500 L 20 500 A 480 480 0 0 1 980 500 L 660 500 A 160 160 0 0 0 340 500 Z" 
+                      fill="#e8f5e9" 
+                      stroke="#000000" 
+                      stroke-width="3" 
+                      stroke-linejoin="round"/>
+            </svg>
+            <div id="plant-layer"></div>
+        </div>
+        
+        <div style="position: absolute; bottom: 5px; right: 10px; font-size: 12px; color: #555; background:rgba(255,255,255,0.7); padding:2px 5px; border-radius:3px;">
+            外径 <span id="area-scale-label">13</span>m
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="count-modal">
+        <div class="modal">
+            <div class="modal-header" style="text-align: center; font-weight: bold; padding-bottom:10px; border-bottom:1px solid #eee;">样方计数录入</div>
+            <div style="font-size: 12px; color: #666; text-align: center;">红色虚线为样方边界</div>
+            <div class="quadrat-view-container" id="modal-view"></div>
+            <div>
+                <label style="font-size:13px; font-weight:bold;">请输入数量:</label>
+                <input type="number" id="modal-input-count" style="width: 100%; margin-top: 5px; padding: 10px; font-size:16px;">
+            </div>
+            <div class="modal-actions" style="display:flex; gap:10px;">
+                <button class="btn" onclick="closeModal()">取消</button>
+                <button class="btn highlight" onclick="submitCount()">确认</button>
+            </div>
+        </div>
+    </div>
+
+<script>
+    /**
+     * 几何逻辑核心
+     * 为了匹配 SVG 的坐标系统 (ViewBox 0 0 1000 500)
+     * 我们将逻辑坐标系设定为 Width=1000, Height=500
+     */
+    const GEOM = {
+        width: 1000,
+        height: 500,
+        cx: 500,
+        cy: 500,
+        // 这些数值必须与 SVG Path 中的半径严格对应
+        rOut: 480, 
+        rIn: 160   
+    };
+
+    const state = {
+        mode: null, 
+        // 5. 更新默认配置: areaSize=13, plantCount=2000, dispersion=0.1
+        settings: { areaSize: 13, plantCount: 2000, dispersion: 0.1, seed: 12345 },
+        currentPreset: 1, customSize: 10,
+        plants: [], quadrats: [],
+        nextId: 1
+    };
+
+    const DOM = {
+        simArea: document.getElementById('simulation-area'),
+        plantLayer: document.getElementById('plant-layer'), // 新增植物层容器，避免清除 SVG
+        modal: document.getElementById('count-modal'),
+        toast: document.getElementById('toast-bubble'),
+        btns: {
+            place: document.getElementById('btn-place'),
+            move: document.getElementById('btn-move'),
+            delete: document.getElementById('btn-delete')
+        }
+    };
+
+    function createSeededRandom(seed) {
+        return function() {
+            seed = (seed * 9301 + 49297) % 233280;
+            return seed / 233280;
+        };
+    }
+
+    function init() {
+        updateSettingsUI();
+        generatePlants();
+        setupEventListeners();
+    }
+
+    function switchTab(tabName) {
+        document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+        document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+        document.getElementById(`tab-${tabName}`).classList.add('active');
+        const idx = tabName === 'main' ? 0 : 1;
+        document.querySelectorAll('.tab-btn')[idx].classList.add('active');
+    }
+
+    function updateSettingsUI() {
+        document.getElementById('plant-count-val').innerText = document.getElementById('setting-plant-count').value;
+        document.getElementById('dispersion-val').innerText = document.getElementById('setting-dispersion').value;
+        document.getElementById('setting-seed').value = state.settings.seed;
+    }
+
+    function updateSettings() {
+        state.settings.areaSize = parseFloat(document.getElementById('setting-area-size').value);
+        state.settings.plantCount = parseInt(document.getElementById('setting-plant-count').value);
+        state.settings.dispersion = parseFloat(document.getElementById('setting-dispersion').value);
+        
+        let seedInput = parseInt(document.getElementById('setting-seed').value);
+        if(!isNaN(seedInput)) {
+            state.settings.seed = seedInput;
+        }
+
+        document.getElementById('area-scale-label').innerText = state.settings.areaSize;
+    }
+
+    function randomizeSeed() {
+        const newSeed = Math.floor(Math.random() * 100000);
+        state.settings.seed = newSeed;
+        document.getElementById('setting-seed').value = newSeed;
+        resetSimulation();
+    }
+
+    function resetSimulation() {
+        updateSettings();
+        state.quadrats.forEach(q => q.element.remove());
+        state.quadrats = [];
+        state.mode = null;
+        resetUIState();
+        generatePlants();
+        switchTab('main');
+    }
+
+    function generatePlants() {
+        // 清除旧植物，保留 SVG
+        const existingPlants = document.querySelectorAll('.plant');
+        existingPlants.forEach(p => p.remove());
+        
+        state.plants = [];
+        
+        const rng = createSeededRandom(state.settings.seed);
+        const plantSize = 4;
+        
+        const clusters = Math.max(1, Math.floor(state.settings.plantCount / 20));
+        const clusterCenters = [];
+        
+        for(let i=0; i<clusters; i++) {
+            const angle = Math.PI + rng() * Math.PI; 
+            const rSquare = rng() * (GEOM.rOut**2 - GEOM.rIn**2) + GEOM.rIn**2;
+            const r = Math.sqrt(rSquare);
+            const cx = GEOM.cx + r * Math.cos(angle);
+            const cy = GEOM.cy + r * Math.sin(angle);
+            clusterCenters.push({x: cx, y: cy});
+        }
+
+        for (let i = 0; i < state.settings.plantCount; i++) {
+            let x, y;
+            let valid = false;
+            let attempts = 0;
+            
+            while(!valid && attempts < 20) {
+                attempts++;
+                if (rng() < state.settings.dispersion) {
+                    const angle = Math.PI + rng() * Math.PI;
+                    const rSquare = rng() * (GEOM.rOut**2 - GEOM.rIn**2) + GEOM.rIn**2;
+                    const r = Math.sqrt(rSquare);
+                    x = GEOM.cx + r * Math.cos(angle);
+                    y = GEOM.cy + r * Math.sin(angle);
+                } else {
+                    const centerIdx = Math.floor(rng() * clusters);
+                    const center = clusterCenters[centerIdx];
+                    const offset = () => (rng() - 0.5) * 50; // 这里的50是相对于总宽1000的
+                    x = center.x + offset();
+                    y = center.y + offset();
+                }
+                
+                const dx = x - GEOM.cx;
+                const dy = y - GEOM.cy;
+                const distSq = dx*dx + dy*dy;
+                // 留出少量 padding 防止植物压到黑线 (rIn + 5, rOut - 5)
+                if (distSq >= (GEOM.rIn+5)**2 && distSq <= (GEOM.rOut-5)**2 && y <= GEOM.cy) {
+                    valid = true;
+                }
+            }
+
+            if (valid) {
+                state.plants.push({x, y});
+                const dot = document.createElement('div');
+                dot.className = 'plant'; 
+                dot.style.width = plantSize + 'px';
+                dot.style.height = plantSize + 'px';
+                // 转换为百分比定位
+                dot.style.left = (x / 10) + '%';
+                dot.style.top = (y / 5) + '%'; 
+                DOM.simArea.appendChild(dot);
+            }
+        }
+    }
+
+    function selectPreset(size, el) {
+        if (state.quadrats.length > 0 && state.mode === 'place') return;
+        state.currentPreset = size;
+        document.querySelectorAll('.preset-item').forEach(i => i.classList.remove('selected'));
+        el.classList.add('selected');
+        const display = document.getElementById('preset-info');
+        const customDiv = document.getElementById('custom-input-div');
+        
+        if (size === 'custom') {
+            customDiv.style.display = 'flex';
+            const val = document.getElementById('custom-size-input').value;
+            display.innerText = `当前选择: 自定义 ${val}m`;
+        } else {
+            customDiv.style.display = 'none';
+            display.innerText = `当前选择: 边长 ${size}m`;
+        }
+    }
+
+    document.getElementById('custom-size-input').addEventListener('input', (e) => {
+        state.customSize = parseInt(e.target.value) || 1;
+        document.getElementById('preset-info').innerText = `当前选择: 自定义 ${state.customSize}m`;
+    });
+
+    function setMode(mode) {
+        Object.values(DOM.btns).forEach(b => b.classList.remove('highlight'));
+        if (state.mode === mode) {
+            state.mode = null;
+            document.getElementById('mode-info').innerText = "操作已取消";
+            return;
+        }
+        state.mode = mode;
+        if(DOM.btns[mode]) DOM.btns[mode].classList.add('highlight');
+        const map = {
+            'place': '点击绿色区域放置样方',
+            'move': '拖拽样方进行移动',
+            'delete': '点击样方删除'
+        };
+        document.getElementById('mode-info').innerText = map[mode] || "";
+    }
+
+    function setupEventListeners() {
+        DOM.simArea.addEventListener('mousedown', handleAreaInteraction);
+        DOM.simArea.addEventListener('touchstart', handleAreaInteraction, {passive: false});
+    }
+
+    let toastTimer = null;
+    function showToast(x, y, text) {
+        DOM.toast.innerText = text;
+        DOM.toast.style.left = x + 'px';
+        DOM.toast.style.top = y + 'px';
+        DOM.toast.classList.add('show');
+        if(toastTimer) clearTimeout(toastTimer);
+        toastTimer = setTimeout(() => DOM.toast.classList.remove('show'), 2000);
+    }
+
+    function getLogicPos(e) {
+        const rect = DOM.simArea.getBoundingClientRect();
+        let clientX = e.clientX;
+        let clientY = e.clientY;
+        if(e.touches && e.touches.length > 0) {
+            clientX = e.touches[0].clientX;
+            clientY = e.touches[0].clientY;
+        }
+
+        // 转换为逻辑坐标 (0-1000, 0-500)
+        const logicX = ((clientX - rect.left) / rect.width) * 1000;
+        const logicY = ((clientY - rect.top) / rect.height) * 500;
+
+        return {
+            x: logicX,
+            y: logicY,
+            clientX,
+            clientY
+        };
+    }
+
+    function handleAreaInteraction(e) {
+        if (state.mode !== 'place') return;
+        if(e.cancelable) e.preventDefault();
+        const pos = getLogicPos(e);
+        addQuadrat(pos.x, pos.y, pos.clientX, pos.clientY);
+    }
+
+    function clampPosition(x, y, halfSizeLogic) {
+        const h = halfSizeLogic;
+        
+        if (y + h > GEOM.cy) {
+            y = GEOM.cy - h;
+        }
+
+        const dx = x - GEOM.cx;
+        const dy = y - GEOM.cy;
+        const dist = Math.sqrt(dx*dx + dy*dy);
+
+        const safeInner = GEOM.rIn + h;
+        const safeOuter = GEOM.rOut - h;
+
+        if (safeOuter < safeInner) {
+            const midR = (GEOM.rOut + GEOM.rIn) / 2;
+            const angle = Math.atan2(dy, dx);
+            return {
+                x: GEOM.cx + midR * Math.cos(angle),
+                y: GEOM.cy + midR * Math.sin(angle)
+            };
+        }
+
+        let newDist = dist;
+        if (dist < safeInner) newDist = safeInner;
+        if (dist > safeOuter) newDist = safeOuter;
+
+        if (newDist !== dist) {
+            const angle = Math.atan2(dy, dx);
+            x = GEOM.cx + newDist * Math.cos(angle);
+            y = GEOM.cy + newDist * Math.sin(angle);
+        }
+
+        if (y + h > GEOM.cy) {
+            y = GEOM.cy - h;
+        }
+
+        return { x, y };
+    }
+
+    function addQuadrat(initialX, initialY, clientX, clientY) {
+        let sizeM = state.currentPreset === 'custom' ? state.customSize : state.currentPreset;
+        
+        // 比例计算
+        // 逻辑半径 480 对应物理半径 (areaSize/2)
+        const physicalRadius = state.settings.areaSize / 2;
+        const unitsPerMeter = GEOM.rOut / physicalRadius;
+        const sizeLogic = sizeM * unitsPerMeter;
+        
+        const ringWidthLogic = GEOM.rOut - GEOM.rIn;
+        if (sizeLogic > ringWidthLogic) {
+            showToast(clientX, clientY, "样方过大，无法放入环形区域");
+            return;
+        }
+
+        let pos = clampPosition(initialX, initialY, sizeLogic / 2);
+        let finalX = pos.x;
+        let finalY = pos.y;
+
+        let overlap = false;
+        for (let q of state.quadrats) {
+            const dx = Math.abs(finalX - q.x);
+            const dy = Math.abs(finalY - q.y);
+            const minDist = (sizeLogic + q.sizeLogic) / 2;
+            if (dx < minDist - 1 && dy < minDist - 1) {
+                overlap = true;
+                break;
+            }
+        }
+
+        if (overlap) {
+            showToast(clientX, clientY, "存在重叠风险,请尝试其他区域");
+            return;
+        }
+
+        createQuadratDOM(finalX, finalY, sizeM, sizeLogic);
+    }
+
+    function createQuadratDOM(x, y, sizeM, sizeLogic) {
+        const id = state.nextId++;
+        const el = document.createElement('div');
+        el.className = 'quadrat';
+        // 逻辑尺寸转百分比 (总宽1000, 总高500)
+        el.style.width = (sizeLogic / 10) + '%';
+        el.style.height = (sizeLogic / 5) + '%'; 
+        el.style.left = (x / 10) + '%';
+        el.style.top = (y / 5) + '%';
+        el.innerText = state.quadrats.length + 1;
+        el.dataset.id = id;
+
+        el.addEventListener('mousedown', (e) => handleQuadratClick(e, id));
+        el.addEventListener('touchstart', (e) => handleQuadratClick(e, id));
+
+        DOM.simArea.appendChild(el);
+
+        state.quadrats.push({
+            id: id,
+            x: x, 
+            y: y, 
+            wM: sizeM, 
+            sizeLogic: sizeLogic,
+            userCount: null,
+            element: el
+        });
+    }
+
+    function handleQuadratClick(e, id) {
+        e.stopPropagation();
+        const qIndex = state.quadrats.findIndex(q => q.id === id);
+        const q = state.quadrats[qIndex];
+
+        if (state.mode === 'counting') {
+            openCountModal(q);
+            return;
+        }
+        if (state.mode === 'delete') {
+            q.element.remove();
+            state.quadrats.splice(qIndex, 1);
+            state.quadrats.forEach((item, idx) => item.element.innerText = idx + 1);
+            return;
+        }
+        if (state.mode === 'move') {
+            startDrag(e, q);
+            return;
+        }
+    }
+
+    function startDrag(e, q) {
+        if(e.cancelable) e.preventDefault();
+        const startPos = getLogicPos(e);
+        const startXLogic = startPos.x;
+        const startYLogic = startPos.y;
+        const initialObjX = q.x;
+        const initialObjY = q.y;
+
+        const onMove = (evt) => {
+            const currPos = getLogicPos(evt);
+            const dx = currPos.x - startXLogic;
+            const dy = currPos.y - startYLogic;
+            let nx = initialObjX + dx;
+            let ny = initialObjY + dy;
+            const pos = clampPosition(nx, ny, q.sizeLogic / 2);
+            
+            q.element.style.left = (pos.x / 10) + '%';
+            q.element.style.top = (pos.y / 5) + '%';
+            q.tempX = pos.x;
+            q.tempY = pos.y;
+        };
+
+        const onUp = () => {
+            if (q.tempX !== undefined) {
+                q.x = q.tempX;
+                q.y = q.tempY;
+                delete q.tempX;
+                delete q.tempY;
+            }
+            document.removeEventListener('mousemove', onMove);
+            document.removeEventListener('mouseup', onUp);
+            document.removeEventListener('touchmove', onMove);
+            document.removeEventListener('touchend', onUp);
+        };
+
+        document.addEventListener('mousemove', onMove);
+        document.addEventListener('mouseup', onUp);
+        document.addEventListener('touchmove', onMove, {passive: false});
+        document.addEventListener('touchend', onUp);
+    }
+
+    function startStatistics() {
+        if (state.quadrats.length === 0) {
+            alert("请先放置样方");
+            return;
+        }
+        Object.values(DOM.btns).forEach(b => b.classList.remove('highlight'));
+        state.mode = 'counting';
+        DOM.btns.place.disabled = true;
+        DOM.btns.move.disabled = true;
+        DOM.btns.delete.disabled = true;
+        document.getElementById('stats-panel').style.display = 'block';
+        document.getElementById('mode-info').innerText = "统计模式: 点击红框样方进行计数";
+        document.getElementById('stats-panel').scrollIntoView({behavior: "smooth"});
+    }
+
+    let currentCountingQuadrat = null;
+
+    function openCountModal(quadrat) {
+        currentCountingQuadrat = quadrat;
+        DOM.modal.style.display = 'flex';
+        DOM.modal.querySelector('input').value = quadrat.userCount !== null ? quadrat.userCount : '';
+        DOM.modal.querySelector('input').focus();
+        renderModalView(quadrat);
+    }
+
+    function renderModalView(q) {
+        const container = document.getElementById('modal-view');
+        container.innerHTML = '';
+        const viewScale = 1.2;
+        const viewRangeLogic = q.sizeLogic * viewScale; 
+        const boxSizePx = 200 / viewScale; 
+
+        const box = document.createElement('div');
+        box.style.width = boxSizePx + 'px';
+        box.style.height = boxSizePx + 'px';
+        box.style.border = '2px dashed red';
+        box.style.position = 'absolute';
+        box.style.top = '50%';
+        box.style.left = '50%';
+        box.style.transform = 'translate(-50%, -50%)';
+        container.appendChild(box);
+
+        const rangeMinX = q.x - viewRangeLogic / 2;
+        const rangeMaxX = q.x + viewRangeLogic / 2;
+        const rangeMinY = q.y - viewRangeLogic / 2;
+        const rangeMaxY = q.y + viewRangeLogic / 2;
+
+        state.plants.forEach(p => {
+            if (p.x >= rangeMinX && p.x <= rangeMaxX && p.y >= rangeMinY && p.y <= rangeMaxY) {
+                // p.x p.y 是逻辑坐标(1000)
+                const relX = (p.x - rangeMinX) / viewRangeLogic * 200;
+                const relY = (p.y - rangeMinY) / viewRangeLogic * 200;
+                
+                const dot = document.createElement('div');
+                dot.style.width = '12px'; 
+                dot.style.height = '12px';
+                dot.style.background = '#27ae60'; 
+                dot.style.border = '1px solid #555'; 
+                dot.style.boxSizing = 'border-box';  
+                dot.style.borderRadius = '50%';     
+                dot.style.position = 'absolute';
+                dot.style.left = relX + 'px';
+                dot.style.top = relY + 'px';
+                dot.style.transform = 'translate(-50%, -50%)';
+                container.appendChild(dot);
+            }
+        });
+    }
+
+    function closeModal() {
+        DOM.modal.style.display = 'none';
+        currentCountingQuadrat = null;
+    }
+
+    function submitCount() {
+        const input = DOM.modal.querySelector('input');
+        const val = parseInt(input.value);
+        if (isNaN(val) || val < 0) {
+            alert("请输入有效数字");
+            return;
+        }
+        currentCountingQuadrat.userCount = val;
+        currentCountingQuadrat.element.classList.add('completed');
+        closeModal();
+        checkAllCompleted();
+    }
+
+    function checkAllCompleted() {
+        if (state.quadrats.every(q => q.userCount !== null)) {
+            showFinalResults();
+        }
+    }
+
+    function showFinalResults() {
+        let totalDensity = 0;
+        state.quadrats.forEach(q => {
+            totalDensity += q.userCount / (q.wM * q.wM);
+        });
+        const userAvg = totalDensity / state.quadrats.length;
+
+        const rOutM = state.settings.areaSize / 2;
+        const rInM = rOutM * (GEOM.rIn / GEOM.rOut);
+        const areaM2 = (Math.PI * rOutM * rOutM - Math.PI * rInM * rInM) / 2;
+        const trueAvg = state.plants.length / areaM2;
+
+        let error = 0;
+        if (trueAvg !== 0) error = Math.abs(userAvg - trueAvg) / trueAvg * 100;
+        else if (userAvg !== 0) error = 100;
+
+        document.getElementById('result-display').style.display = 'block';
+        document.getElementById('user-density').innerText = userAvg.toFixed(4);
+        document.getElementById('true-density').innerText = trueAvg.toFixed(4);
+        document.getElementById('error-rate').innerText = error.toFixed(2);
+    }
+
+    function resetUIState() {
+        // 仅移除植物 DOM，不移除 SVG (SVG 有 id bg-layer，植物有 class plant)
+        const plants = document.querySelectorAll('.plant');
+        plants.forEach(p => p.remove());
+        
+        document.getElementById('stats-panel').style.display = 'none';
+        document.getElementById('result-display').style.display = 'none';
+        DOM.btns.place.disabled = false;
+        DOM.btns.move.disabled = false;
+        DOM.btns.delete.disabled = false;
+        Object.values(DOM.btns).forEach(b => b.classList.remove('highlight'));
+        document.getElementById('mode-info').innerText = "请选择操作模式";
+    }
+
+    init();
+</script>
+</body>
+</html>

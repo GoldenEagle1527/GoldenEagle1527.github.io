@@ -1,17 +1,5 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
-    <script>
-    // 逻辑：如果当前浏览器地址栏显示的不是我的自定义域名
-    // 强制跳转到自定义域名（那里有 Cloudflare 的密码锁）
-    const myDomain = "572003.xyz"; // 替换为你的真实域名
-    
-    // 本地开发环境(localhost)不跳转，方便调试
-    if (location.hostname !== "localhost" && location.hostname !== "127.0.0.1") {
-        if (location.hostname !== myDomain) {
-            window.location.href = "https://" + myDomain + location.pathname + location.search;
-        }
-    }
-</script>
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -178,15 +166,42 @@
     <header>
         <h1>生物实验模拟系统</h1>
     </header>
-    
+
+    <!-- 
+      核心布局：Grid 网格 
+      逻辑：摒弃 Table 布局，使用 div 容器配合 CSS Grid，
+      使结构与表现分离，提升渲染性能与维护性。
+    -->
     <main class="grid-container">
         
+        <!-- 卡片 1 -->
         <div class="card">
             <a href="./TagRecaptureExperiment/index.html" class="exp-link">标记重捕法</a>
         </div>
         
+        <!-- 卡片 2 
         <div class="card">
             <a href="./SamplingMethod/index.html" class="exp-link">样方法</a>
+        </div> -->
+        
+        <!-- 卡片 4 -->
+        <div class="card">
+            <a href="./quadrat/GrassAggregation.html" class="exp-link">样地 1<br>苜蓿</a>
+        </div>
+        
+        <!-- 卡片 5 -->
+        <div class="card">
+            <a href="./quadrat/GrassRectangle.html" class="exp-link">样地 2<br>苜蓿 (长方形地块)</a>
+        </div>
+        
+        <!-- 卡片 6 -->
+        <div class="card">
+            <a href="./quadrat/GrassRing.html" class="exp-link">样地 3<br>苜蓿 (环形地块)</a>
+        </div>
+        
+        <!-- 卡片 7 -->
+        <div class="card">
+            <a href="./quadrat/shrub.html" class="exp-link">样地 4<br>构树</a>
         </div>
 
     </main>
