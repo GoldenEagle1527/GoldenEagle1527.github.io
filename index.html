@@ -1,38 +1,199 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
+    <script>
+    // 逻辑：如果当前浏览器地址栏显示的不是我的自定义域名
+    // 强制跳转到自定义域名（那里有 Cloudflare 的密码锁）
+    const myDomain = "572003.xyz"; // 替换为你的真实域名
+    
+    // 本地开发环境(localhost)不跳转，方便调试
+    if (location.hostname !== "localhost" && location.hostname !== "127.0.0.1") {
+        if (location.hostname !== myDomain) {
+            window.location.href = "https://" + myDomain + location.pathname + location.search;
+        }
+    }
+</script>
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="icon" href="Icon.svg" type="image/svg+xml">
+    <link rel="icon" type="image/svg+xml" href="./Icon.svg">
     <title>生物实验模拟系统</title>
-    <!-- 引入 Outfit 字体以提升英文数字排版，结合 Noto Sans SC 支持中文 -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <!-- 引入重构后的外部样式 -->
-    <link rel="stylesheet" href="index.css">
+    <style>
+        /* =========================================
+           CSS 变量定义 (配色方案)
+           逻辑：通过变量管理颜色，便于统一修改和实现深色模式
+           ========================================= */
+        :root {
+            /* 浅色模式 (默认) */
+            --bg-color: #f5f7fa;
+            --text-primary: #1f2937;
+            --text-secondary: #6b7280;
+            --card-bg: #ffffff;
+            --card-border: #e5e7eb;
+            --card-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            --card-hover-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+            --accent-color: #2563eb; /* 科技蓝 */
+            --accent-hover: #1d4ed8;
+            --footer-text: #9ca3af;
+        }
+
+        /* 深色模式适配 */
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --bg-color: #111827;
+                --text-primary: #f3f4f6;
+                --text-secondary: #9ca3af;
+                --card-bg: #1f2937;
+                --card-border: #374151;
+                --card-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.5);
+                --card-hover-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.5);
+                --accent-color: #60a5fa; /* 较亮的蓝色以适应深底 */
+                --accent-hover: #93c5fd;
+                --footer-text: #6b7280;
+            }
+        }
+
+        /* =========================================
+           全局重置与基础样式
+           ========================================= */
+        * {
+            box-sizing: border-box;
+            transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", "Microsoft YaHei", sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-primary);
+            margin: 0;
+            padding: 0;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        /* =========================================
+           布局组件
+           ========================================= */
+        
+        /* 头部样式 */
+        header {
+            width: 100%;
+            padding: 60px 20px 40px;
+            text-align: center;
+        }
+
+        h1 {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin: 0;
+            letter-spacing: 1px;
+            position: relative;
+            display: inline-block;
+        }
+
+        /* 标题下方的装饰线 */
+        h1::after {
+            content: '';
+            display: block;
+            width: 60px;
+            height: 4px;
+            background-color: var(--accent-color);
+            margin: 15px auto 0;
+            border-radius: 2px;
+        }
+
+        /* 核心网格容器 (替代原有的 table) */
+        .grid-container {
+            width: 100%;
+            max-width: 1200px; /* 限制最大宽度 */
+            padding: 20px;
+            display: grid;
+            /* 逻辑：自动填充列，每列最小240px，最大1fr。这实现了自动响应式，无需特定的移动端媒体查询 */
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            gap: 25px;
+            justify-content: center;
+        }
+
+        /* =========================================
+           卡片样式 (替代原有的 td)
+           ========================================= */
+        .card {
+            background-color: var(--card-bg);
+            border: 1px solid var(--card-border);
+            border-radius: 12px;
+            box-shadow: var(--card-shadow);
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            transform: translateY(0);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: var(--card-hover-shadow);
+            border-color: var(--accent-color);
+        }
+
+        /* 按钮连接样式 */
+        a.exp-link {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+            height: 100%;
+            min-height: 120px; /* 增加点击区域高度 */
+            text-decoration: none;
+            color: var(--text-primary);
+            font-weight: 600;
+            font-size: 1.1rem;
+            padding: 24px;
+            text-align: center;
+            line-height: 1.5;
+        }
+
+        a.exp-link:hover {
+            color: var(--accent-color);
+        }
+
+        /* =========================================
+           底部样式
+           ========================================= */
+        footer {
+            margin-top: auto;
+            padding: 40px 20px;
+            font-size: 0.875rem;
+            color: var(--footer-text);
+            text-align: center;
+            border-top: 1px solid var(--card-border);
+            width: 100%;
+        }
+
+    </style>
 </head>
 <body>
 
-    <div id="main-container">
-        <header>
-            <div class="logo-wrapper">
-                <img src="Icon.svg" class="logo-icon" alt="生物实验模拟系统 Logo">
-            </div>
-            <h1>生物实验模拟系统</h1>
-            <div class="subtitle">基于 Material Design 3 规范的虚拟实验室</div>
-        </header>
-
-        <main class="grid" id="experiment-list">
-            <!-- 实验链接由 JS 动态注入 -->
-        </main>
+    <header>
+        <h1>生物实验模拟系统</h1>
+    </header>
+    
+    <main class="grid-container">
         
-        <footer>
-            &copy; 2026 生物实验模拟系统 &middot; 探索科学奥秘
-        </footer>
-    </div>
+        <div class="card">
+            <a href="./TagRecaptureExperiment/index.html" class="exp-link">标记重捕法</a>
+        </div>
+        
+        <div class="card">
+            <a href="./SamplingMethod/index.html" class="exp-link">样方法</a>
+        </div>
 
-    <!-- 引入重构后的外部脚本 -->
-    <script type="module" src="index.js"></script>
+    </main>
+
+    <footer>
+        &copy; 2025 生物实验 | 系统版本 1.1 | GoldenEaglePersonal
+    </footer>
+
 </body>
 </html>

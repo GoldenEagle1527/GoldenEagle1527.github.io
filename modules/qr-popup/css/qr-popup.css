@@ -1,39 +1,36 @@
-/* ================= CSS 变量 (继承或 Fallback MD3 浅蓝配色) ================= */
+/* ================= CSS 变量 (保持深色模式支持) ================= */
 :root {
-    --qrp-bg: #fdfcff;
-    --qrp-text: #1a1c1e;
-    --qrp-text-sec: #43474e;
-    --qrp-border: #c3c7cf;
-    --qrp-input-bg: #f0f4f9;
-    --qrp-input-text: #1a1c1e;
-    --qrp-hover-bg: rgba(0, 98, 163, 0.08);
-    --qrp-primary: #0062a3;
-    --qrp-primary-hover: #00548d;
-    --qrp-shadow: rgba(0, 0, 0, 0.12);
-    --qrp-overlay-bg: rgba(0, 0, 0, 0.35);
-    --qrp-toast-bg: #303030;
-    --qrp-toast-text: #ffffff;
+    --qrp-bg: #ffffff;
+    --qrp-text: #333333;
+    --qrp-text-sec: #666666;
+    --qrp-border: #dddddd;
+    --qrp-input-bg: #f5f5f5;
+    --qrp-input-text: #333333;
+    --qrp-hover-bg: #f0f8ff;
+    --qrp-primary: #007bff;
+    --qrp-primary-hover: #0056b3;
+    --qrp-shadow: rgba(0, 0, 0, 0.2);
+    --qrp-overlay-bg: rgba(0, 0, 0, 0.6);
+    --qrp-toast-bg: rgba(0, 0, 0, 0.85); /* 气泡背景 */
 }
 
 @media (prefers-color-scheme: dark) {
     :root {
-        --qrp-bg: #121318;
-        --qrp-text: #e2e2e6;
-        --qrp-text-sec: #c3c7cf;
-        --qrp-border: #43474e;
-        --qrp-input-bg: #1e2025;
-        --qrp-input-text: #e2e2e6;
-        --qrp-hover-bg: rgba(158, 202, 254, 0.12);
-        --qrp-primary: #9ecafe;
-        --qrp-primary-hover: #b3d7ff;
-        --qrp-shadow: rgba(0, 0, 0, 0.35);
-        --qrp-overlay-bg: rgba(0, 0, 0, 0.6);
-        --qrp-toast-bg: #f2f0f4;
-        --qrp-toast-text: #1a1c1e;
+        --qrp-bg: #2b2b2b;
+        --qrp-text: #e0e0e0;
+        --qrp-text-sec: #aaaaaa;
+        --qrp-border: #444444;
+        --qrp-input-bg: #3a3a3a;
+        --qrp-input-text: #ffffff;
+        --qrp-hover-bg: #3e3e3e;
+        --qrp-primary: #3a8ee6;
+        --qrp-primary-hover: #5aaaff;
+        --qrp-shadow: rgba(0, 0, 0, 0.5);
+        --qrp-toast-bg: rgba(255, 255, 255, 0.9); /* 深色模式下气泡反色，更显眼 */
     }
 }
 
-/* ================= MD3 风格组件样式 ================= */
+/* ================= 组件样式 ================= */
 
 .qrp-overlay {
     position: fixed;
@@ -46,157 +43,128 @@
     justify-content: center;
     align-items: center;
     z-index: 10000;
-    backdrop-filter: blur(12px);
-    transition: all 0.3s ease;
+    backdrop-filter: blur(3px);
 }
 
-/* 28px 圆角大弹窗 (MD3 Dialog) */
 .qrp-modal {
     background: var(--qrp-bg);
     color: var(--qrp-text);
-    padding: 28px;
-    border-radius: 28px;
+    padding: 25px;
+    border-radius: 12px;
+    
+    /* === 尺寸调整：加宽以容纳大二维码 === */
     width: 600px; 
-    max-width: 92vw;
-    max-height: 90vh;
-    overflow-y: auto; 
-    box-shadow: 0 16px 48px var(--qrp-shadow);
+    max-width: 95vw;
+    max-height: 95vh;
+    overflow-y: auto; /* 防止小屏幕高度溢出 */
+    
+    box-shadow: 0 8px 24px var(--qrp-shadow);
     display: flex;
     flex-direction: column;
-    gap: 20px;
-    font-family: inherit;
+    gap: 15px;
+    font-family: sans-serif;
     position: relative;
     border: 1px solid var(--qrp-border);
-    transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
 .qrp-close {
     position: absolute;
-    top: 20px;
-    right: 24px;
-    font-size: 26px;
+    top: 15px;
+    right: 20px;
+    font-size: 28px;
     cursor: pointer;
     color: var(--qrp-text-sec);
     line-height: 1;
     z-index: 2;
-    transition: color 0.2s;
 }
 .qrp-close:hover { color: var(--qrp-text); }
 
-.qrp-input-group { display: flex; gap: 10px; }
+.qrp-input-group { display: flex; gap: 8px; }
 
-/* 12px 圆角输入框 */
 .qrp-input {
     flex: 1;
-    padding: 12px 16px;
-    border: 1.5px solid var(--qrp-border);
-    border-radius: 12px;
+    padding: 10px;
+    border: 1px solid var(--qrp-border);
+    border-radius: 6px;
     background: var(--qrp-input-bg);
     color: var(--qrp-input-text);
     outline: none;
-    font-size: 14px;
-    transition: border-color 0.25s, box-shadow 0.25s;
 }
-.qrp-input:focus { 
-    border-color: var(--qrp-primary); 
-    box-shadow: 0 0 0 3px rgba(0, 98, 163, 0.15);
-}
-@media (prefers-color-scheme: dark) {
-    .qrp-input:focus {
-        box-shadow: 0 0 0 3px rgba(158, 202, 254, 0.2);
-    }
-}
+.qrp-input:focus { border-color: var(--qrp-primary); }
 
-/* 100px 椭圆主按钮 */
 .qrp-btn {
-    padding: 10px 24px;
+    padding: 8px 20px;
     border: none;
-    border-radius: 100px;
+    border-radius: 6px;
     cursor: pointer;
     background-color: var(--qrp-primary);
-    color: var(--qrp-bg); /* on-primary 代表的对比色，用背景色表示最贴切 */
-    font-weight: 600;
-    font-size: 14px;
+    color: #fff;
+    font-weight: 500;
     white-space: nowrap;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-    transition: all 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
-.qrp-btn:hover { 
-    background-color: var(--qrp-primary-hover); 
-    transform: scale(1.03);
-    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.15);
-}
-.qrp-btn:active {
-    transform: scale(0.97);
-}
+.qrp-btn:hover { background-color: var(--qrp-primary-hover); }
 
-/* 二维码区域 */
+/* === 二维码区域优化 === */
 .qrp-qr-box {
     display: flex;
     justify-content: center;
     align-items: center;
-    background-color: #ffffff !important; /* 二维码必须保持纯白背景 */
+    
+    /* 1. 强制白底与内边距 */
+    background-color: #ffffff !important;
     padding: 20px;
-    border: 1.5px dashed var(--qrp-border);
-    border-radius: 20px;
+    border: 1px dashed var(--qrp-border);
+    border-radius: 8px;
+    
+    /* 2. 布局控制 */
     width: 100%;
-    min-height: 300px; 
+    min-height: 300px; /* 预留空间 */
     box-sizing: border-box;
-    box-shadow: inset 0 2px 8px rgba(0,0,0,0.05);
 }
 
+/* 3. 关键：控制图片显示尺寸，但不影响原始分辨率 */
 .qrp-qr-box img, 
 .qrp-qr-box canvas {
     max-width: 100% !important;
     height: auto !important;
-    max-height: 40vh; 
+    /* 限制屏幕上的最大显示高度，避免占满屏幕，但下载时还是640px */
+    max-height: 50vh; 
     display: block;
-    border-radius: 8px;
 }
 
-.qrp-footer { display: flex; gap: 12px; }
-
-/* Outlined 副按钮 */
+.qrp-footer { display: flex; gap: 10px; }
 .qrp-btn-sec {
     flex: 1;
-    padding: 12px;
+    padding: 10px;
     background-color: transparent;
-    border: 1.5px solid var(--qrp-primary);
+    border: 1px solid var(--qrp-primary);
     color: var(--qrp-primary);
-    border-radius: 100px;
+    border-radius: 6px;
     cursor: pointer;
-    font-weight: 600;
-    font-size: 14px;
-    transition: all 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+    font-weight: 500;
 }
-.qrp-btn-sec:hover { 
-    background-color: var(--qrp-hover-bg); 
-    transform: scale(1.02);
-}
-.qrp-btn-sec:active {
-    transform: scale(0.98);
-}
+.qrp-btn-sec:hover { background-color: var(--qrp-hover-bg); }
 
-/* MD3 Snackbar 风格气泡提示 (Toast) */
+/* === 气泡提示 (Toast) === */
 .qrp-toast {
     position: absolute;
-    bottom: 24px;
+    bottom: 10%;
     left: 50%;
-    transform: translateX(-50%) translateY(10px);
+    transform: translateX(-50%);
     background-color: var(--qrp-toast-bg);
-    color: var(--qrp-toast-text); 
-    padding: 12px 28px;
-    border-radius: 100px;
+    color: #fff; /* 这里根据背景决定，深色模式背景反色则此处文字可能需调整，简单起见用反色背景 */
+    padding: 10px 24px;
+    border-radius: 30px;
     font-size: 14px;
-    font-weight: 500;
-    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
     opacity: 0;
-    transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
-    pointer-events: none; 
+    transition: opacity 0.3s ease;
+    pointer-events: none; /* 防止遮挡点击 */
     z-index: 10001;
 }
 
-.qrp-toast.show { 
-    opacity: 1; 
-    transform: translateX(-50%) translateY(0);
+@media (prefers-color-scheme: dark) {
+    .qrp-toast { color: #333; } /* 深色模式下背景是白的，字变黑 */
 }
+
+.qrp-toast.show { opacity: 1; }
