@@ -6,7 +6,7 @@ import * as Quadrat from './quadrat.js';
 import * as Stats from './stats.js';
 
 // 重置模拟系统并重新渲染背景和植物
-export function resetSimulation() {
+export function resetSimulation(switchTab = false) {
     updateSettings();
     initSeed(state.settings.seed);
 
@@ -70,7 +70,9 @@ export function resetSimulation() {
 
     resetUIState();
     generatePlants();
-    UI.switchTab('main');
+    if (switchTab === true) {
+        UI.switchTab('main');
+    }
     UI.updateMainTargetSelect();
 }
 
@@ -277,25 +279,25 @@ document.addEventListener('DOMContentLoaded', () => {
     if (shapeSelect) {
         shapeSelect.addEventListener('change', () => {
             UI.toggleShapeControls();
-            resetSimulation();
+            resetSimulation(false);
         });
     }
 
     const areaSizeInput = document.getElementById('setting-area-size');
     if (areaSizeInput) {
-        areaSizeInput.addEventListener('change', resetSimulation);
+        areaSizeInput.addEventListener('change', () => resetSimulation(false));
     }
 
     const innerSizeInput = document.getElementById('setting-inner-size');
     if (innerSizeInput) {
-        innerSizeInput.addEventListener('change', resetSimulation);
+        innerSizeInput.addEventListener('change', () => resetSimulation(false));
     }
 
     const angleStartInput = document.getElementById('setting-angle-start');
     if (angleStartInput) {
         angleStartInput.addEventListener('input', () => {
             UI.updateAngleLabels();
-            resetSimulation();
+            resetSimulation(false);
         });
     }
 
@@ -303,20 +305,20 @@ document.addEventListener('DOMContentLoaded', () => {
     if (angleEndInput) {
         angleEndInput.addEventListener('input', () => {
             UI.updateAngleLabels();
-            resetSimulation();
+            resetSimulation(false);
         });
     }
 
     const seedInput = document.getElementById('setting-seed');
     if (seedInput) {
-        seedInput.addEventListener('change', resetSimulation);
+        seedInput.addEventListener('change', () => resetSimulation(false));
     }
 
     const randomizeSeedBtn = document.querySelector('.setting-item button.btn-sm');
     if (randomizeSeedBtn) {
         randomizeSeedBtn.addEventListener('click', () => {
             randomizeSeed();
-            resetSimulation();
+            resetSimulation(false);
         });
     }
 
@@ -327,9 +329,9 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // 重置和分享按钮
-    const resetSimulationBtn = document.querySelector('#tab-settings button.btn-primary');
+    const resetSimulationBtn = document.querySelector('#tab-settings > button.btn-primary');
     if (resetSimulationBtn) {
-        resetSimulationBtn.addEventListener('click', resetSimulation);
+        resetSimulationBtn.addEventListener('click', () => resetSimulation(true));
     }
 
     const shareConfigBtn = document.querySelector('#tab-settings button.btn-success');
